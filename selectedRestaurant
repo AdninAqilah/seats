@@ -1,0 +1,49 @@
+import 'package:flutter/material.dart';
+import './queue.dart';
+
+class selectedRestaurant extends StatelessWidget {
+  //final int num;
+  const selectedRestaurant({Key? key}) : super(key: key);
+
+  /*int getNum (){
+    return this.num;
+  }*/
+
+  @override
+  Widget build(BuildContext context) {
+    return selRestaurant();
+  }
+}
+
+class selRestaurant extends StatefulWidget {
+  const selRestaurant({Key? key}) : super(key: key);
+
+  @override
+  State<selRestaurant> createState() => _selRestaurantState();
+}
+
+class _selRestaurantState extends State<selRestaurant> {
+  var img = 'assets/logo king aroi.jpg';
+  bool addQueue = false;
+  void toAddQueue() {
+    setState(() {
+      addQueue = true;
+    });
+  }
+  @override
+  Widget build(BuildContext context) {
+    return !addQueue?
+      Column(
+        children: <Widget>[
+          Image(image: AssetImage(img)),
+
+              ElevatedButton(onPressed: null, child: Text("Menu")),
+              ElevatedButton(onPressed: toAddQueue, child: Text("Queue"))
+            ,
+
+        ]
+      ) :
+        Center(child: Queue())
+    ;
+  }
+}
