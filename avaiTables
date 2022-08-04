@@ -1,0 +1,39 @@
+import 'package:flutter/material.dart';
+import './listRestaurants.dart';
+
+class avaiTables extends StatelessWidget {
+  const avaiTables({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return mapList();
+  }
+}
+
+class mapList extends StatefulWidget {
+  const mapList({Key? key}) : super(key: key);
+
+  @override
+  State<mapList> createState() => _mapListState();
+}
+
+class _mapListState extends State<mapList> {
+  bool viewList = false;
+  void toViewList(){
+    setState(() {
+      viewList = true;
+    });
+  }
+  @override
+  Widget build(BuildContext context) {
+    return !viewList ? Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+      children: <Widget>[
+      ElevatedButton(onPressed: null, child:Text("Map")),
+      ElevatedButton(onPressed: toViewList, child:Text("List")),]
+    ):
+    Container(child: listRestaurants());
+  }
+}
+
+
