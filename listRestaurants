@@ -1,0 +1,54 @@
+import 'package:flutter/material.dart';
+import './selectedRestaurant.dart';
+
+class listRestaurants extends StatelessWidget {
+  const listRestaurants({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return RestaurantsInList();
+  }
+}
+
+class RestaurantsInList extends StatefulWidget {
+  const RestaurantsInList({Key? key}) : super(key: key);
+
+  @override
+  State<RestaurantsInList> createState() => _RestaurantsInListState();
+}
+
+class _RestaurantsInListState extends State<RestaurantsInList> {
+  bool viewRest = false;
+  //int restNum = 0;
+  void toSelectRestaurant() {
+    setState(() {
+      viewRest = true;
+      //restNum = index;
+    });
+  }
+
+
+  @override
+  Widget build(BuildContext context) {
+    var restNames = ["King Aroi", "Teman U", "Sahabat Ramai RMJ"];
+    var numOfTables = [0, 3, 2];
+
+    return !viewRest ? ListView.builder(
+        itemCount: restNames.length,
+        itemBuilder: (context, index) {
+          return Row(
+            children: <Widget>[
+             ElevatedButton(
+               onPressed: toSelectRestaurant,
+               child: Text('${restNames[index]}'),
+                      style: ElevatedButton.styleFrom(fixedSize: Size(350, 50)),
+                      ),
+              Text('${numOfTables[index]}'),
+              Icon(Icons.table_bar),
+
+          ]
+          );
+
+  }):
+    Center(child: selectedRestaurant());
+}}
