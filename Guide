@@ -1,0 +1,42 @@
+import 'package:flutter/material.dart';
+
+class Guide extends StatelessWidget {
+  @override
+  Widget build (BuildContext context) {
+    return Container(
+      //color: Colors.green,
+        decoration: BoxDecoration(
+            color: Colors.amber.shade700,
+            border: Border.all(
+              color: Colors.green,
+              width: 8,
+            )
+        ),
+      child: Text("To view tables availabilty\n"
+    "-Tap on \"available tables\"\n"
+    "-Tap on \"map\" to view nearby restaurants on a map or\n"
+    "tap on \"list\" to view in a long list\n"
+    "-Each restaurant is shown with the number of tables\n"
+    "available for the restaurant\n"
+
+    "To view menu\n"
+    "-Tap on the restaurant to view the restaurant\n"
+    "-Tap on \"menu\" to view menu of selected restaurant\n\n"
+
+    "To add queue\n"
+    "-Tap on the restaurant to view the restaurant\n"
+    "-Tap on \"queue\"\n"
+    "-Fill in number of pax\n"
+    "-The estimated time is automatically shown\n"
+    "based on the current time and number of pax\n"
+    "-Tap \"submit\" if you agree to add queue\n"
+    "-Details of queue will be displayed\n"
+    "-Notifications will be frequently sent as reminders\n"
+    "-Please note that your queue will be cancelled if you didn't show up after 10 minutes\n\n"
+
+    "To view announcements\n"
+    "-Tap \"announcements\" to view latest announcements\n"
+      "from nearby restaurants", style: TextStyle(color: Colors.white)),
+    );
+}
+}
