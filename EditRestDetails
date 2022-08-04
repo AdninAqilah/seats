@@ -1,0 +1,262 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+
+class EditRestDetails extends StatefulWidget {
+  const EditRestDetails({Key? key}) : super(key: key);
+
+  @override
+  State<EditRestDetails> createState() => _EditRestDetailsState();
+}
+
+class _EditRestDetailsState extends State<EditRestDetails> {
+  final nameController = TextEditingController();
+  bool monChecked = false;
+  bool tueChecked = false;
+  bool wedChecked = false;
+  bool thuChecked = false;
+  bool friChecked = false;
+  bool satChecked = false;
+  bool sunChecked = false;
+  List<String> hours = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
+  List<String> hours2 = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
+  String? selectedHour = '1';
+  String? selectedHour2 = '1';
+  List<String> minutes = ['00', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12',
+    '13', '14', '15', '16', '17', '18', '19', '20',
+    '21', '22', '23', '24', '25', '26', '27', '28', '29', '30',
+    '31', '32', '33', '34', '35', '36', '37', '38', '39', '40',
+    '41', '42', '43', '44', '45', '46', '47', '48', '49', '50',
+    '51', '52', '53', '4', '55', '56', '57', '58', '59',];
+  List<String> minutes2 = ['00', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12',
+    '13', '14', '15', '16', '17', '18', '19', '20',
+    '21', '22', '23', '24', '25', '26', '27', '28', '29', '30',
+    '31', '32', '33', '34', '35', '36', '37', '38', '39', '40',
+    '41', '42', '43', '44', '45', '46', '47', '48', '49', '50',
+    '51', '52', '53', '4', '55', '56', '57', '58', '59',];
+  String? selectedMinute = '00';
+  String? selectedMinute2 = '00';
+  List<String> ampm = ['AM', 'PM'];
+  List<String> ampm2 = ['AM', 'PM'];
+  String? selectedAmpm = 'AM';
+  String? selectedAmpm2 = 'AM';
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+        padding: EdgeInsets.only(left: 32, right: 32),
+        child: SingleChildScrollView(
+            child: Column(
+              children: <Widget>[
+                SizedBox(
+                  width: double.infinity,
+                  child: Text(
+                    'Name',
+                    textAlign: TextAlign.left,
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.lightGreen[900]),
+                  ),
+                ),
+                TextField(
+                  controller: nameController,
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                SizedBox(
+                  width: double.infinity,
+                  height: 30,
+                  child: Text(
+                    'Operating Days',
+                    textAlign: TextAlign.left,
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.lightGreen[900]),
+                  ),
+                ),
+                CheckboxListTile(
+                  controlAffinity: ListTileControlAffinity.leading,
+                  title: Text('Mon'),
+                    value: monChecked,
+                    onChanged: (value) {
+                      setState(() => monChecked = value!);
+                    },
+                activeColor: Colors.lightGreen[900],),
+              CheckboxListTile(
+                controlAffinity: ListTileControlAffinity.leading,
+                title: Text('Tue'),
+                value: tueChecked,
+                onChanged: (value) {
+                  setState(() => tueChecked = value!);
+                },
+                activeColor: Colors.lightGreen[900],),
+              CheckboxListTile(
+                  controlAffinity: ListTileControlAffinity.leading,
+                  title: Text('Wed'),
+                  value: wedChecked,
+                  onChanged: (value) {
+                    setState(() => wedChecked = value!);
+                  },
+                  activeColor: Colors.lightGreen[900],),
+              CheckboxListTile(
+                  controlAffinity: ListTileControlAffinity.leading,
+                  title: Text('Thu'),
+                  value: thuChecked,
+                  onChanged: (value) {
+                    setState(() => thuChecked = value!);
+                  },
+                  activeColor: Colors.lightGreen[900],),
+                CheckboxListTile(
+                  controlAffinity: ListTileControlAffinity.leading,
+                  title: Text('Fri'),
+                  value: friChecked,
+                  onChanged: (value) {
+                    setState(() => friChecked = value!);
+                  },
+                  activeColor: Colors.lightGreen[900],),
+                CheckboxListTile(
+                  controlAffinity: ListTileControlAffinity.leading,
+                  title: Text('Sat'),
+                  value: satChecked,
+                  onChanged: (value) {
+                    setState(() => satChecked = value!);
+                  },
+                  activeColor: Colors.lightGreen[900],),
+                CheckboxListTile(
+                  controlAffinity: ListTileControlAffinity.leading,
+                  title: Text('Sun'),
+                  value: sunChecked,
+                  onChanged: (value) {
+                    setState(() => sunChecked = value!);
+                  },
+                  activeColor: Colors.lightGreen[900],),
+                SizedBox(
+                  width: double.infinity,
+                  height: 30,
+                  child: Text(
+                    'Operating Hours',
+                    textAlign: TextAlign.left,
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.lightGreen[900]),
+                  ),
+                ),
+              Row( //second row
+                children: <Widget>[
+                  Expanded(child:
+                  DropdownButton<String>(
+                      value: selectedHour2,
+                      items: hours2
+                          .map((hours2) => DropdownMenuItem<String>(
+                          value: hours2,
+                          child: Text(hours2,style: TextStyle(fontSize: 18),))).toList(),
+                      onChanged: (hours2) => setState(() => selectedHour2 = hours2)),
+                  ),
+                  SizedBox(child: Text(':', style: TextStyle(fontWeight: FontWeight.bold),), width: 10,),
+                  Expanded(child:
+                  DropdownButton<String>(
+                      value: selectedMinute2,
+                      items: minutes2
+                          .map((minutes2) => DropdownMenuItem<String>(
+                          value: minutes2,
+                          child: Text(minutes2,style: TextStyle(fontSize: 18),))).toList(),
+                      onChanged: (minutes2) => setState(() => selectedMinute2 = minutes2)),
+                  ),
+                  Expanded(child:
+                  DropdownButton<String>(
+                      value: selectedAmpm,
+                      items: ampm
+                          .map((ampm) => DropdownMenuItem<String>(
+                          value: ampm,
+                          child: Text(ampm,style: TextStyle(fontSize: 18),))).toList(),
+                      onChanged: (ampm) => setState(() => selectedAmpm = ampm)),
+                  ),
+                ],
+              ),
+              Text('to', style: TextStyle(fontWeight: FontWeight.bold),),
+                Row(
+                  children: <Widget>[
+                    Expanded(child:
+                    DropdownButton<String>(
+                        value: selectedHour,
+                        items: hours
+                            .map((hours) => DropdownMenuItem<String>(
+                            value: hours,
+                            child: Text(hours,style: TextStyle(fontSize: 18),))).toList(),
+                        onChanged: (hours) => setState(() => selectedHour = hours)),
+                    ),
+                    SizedBox(child: Text(':', style: TextStyle(fontWeight: FontWeight.bold),), width: 10,),
+                    Expanded(child:
+                    DropdownButton<String>(
+                        value: selectedMinute,
+                        items: minutes
+                            .map((minutes) => DropdownMenuItem<String>(
+                            value: minutes,
+                            child: Text(minutes,style: TextStyle(fontSize: 18),))).toList(),
+                        onChanged: (minutes) => setState(() => selectedMinute = minutes)),
+                    ),
+                    Expanded(child:
+                    DropdownButton<String>(
+                        value: selectedAmpm,
+                        items: ampm
+                            .map((ampm) => DropdownMenuItem<String>(
+                            value: ampm,
+                            child: Text(ampm,style: TextStyle(fontSize: 18),))).toList(),
+                        onChanged: (ampm) => setState(() => selectedAmpm = ampm)),
+                    ),
+                  ],
+                ),
+              ElevatedButton(
+                    onPressed: () {
+                      final user = User(
+                        name : nameController.text,
+                        operatingHours : [monChecked, tueChecked, wedChecked, thuChecked,
+                        friChecked, satChecked, sunChecked]
+                      );
+
+                      updateDetails(user);
+                    },
+                    child: Text('Submit'))
+              ],
+            )
+        )
+    );
+  }
+
+  Future updateDetails(User user) async {
+    var currentUser = FirebaseAuth.instance.currentUser;
+    final docUser = FirebaseFirestore.instance.collection('restaurants').doc(currentUser?.uid);
+
+    final json = user.toJson();
+
+    try{
+      await docUser.set(json);
+    }catch(e){
+      print(e);
+    }
+
+    /*docUser.get().then((doc) async => {
+      if (doc.exists) {
+        //update data
+        docUser.update(json)
+      } else {
+        await docUser.set(json) //create document & write data
+      }
+    });*/
+  }
+}
+
+class User {
+  //String id;
+  final String name;
+  final List<bool> operatingHours;
+
+  User(
+  {
+    required this.name,
+    required this.operatingHours,
+  }
+      );
+
+  Map<String, dynamic> toJson() => {
+    //'id': id,
+    'name': name,
+    'operatingHours': operatingHours
+  };
+
+}
