@@ -1,0 +1,57 @@
+import 'package:flutter/material.dart';
+import 'package:fypseats/screens/home/homeCust.dart';
+
+import '../home/home.dart';
+
+class RoleSelection extends StatefulWidget {
+  const RoleSelection({Key? key}) : super(key: key);
+
+  @override
+  State<RoleSelection> createState() => _RoleSelectionState();
+}
+
+class _RoleSelectionState extends State<RoleSelection> {
+  int selectedValue = 0;
+  bool isPressed = false;
+
+  void toNext() {
+    setState(() {
+      isPressed = true;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (isPressed && selectedValue == 1) return homeCust();
+    else if (isPressed && selectedValue == 2) return Home();
+    else
+    return Scaffold(
+      body: Center(
+        child: Column(
+          children: [
+            Text('You are a ...'),
+            RadioListTile<int>(
+                value: 1, groupValue: selectedValue,
+                title: Text('Customer', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold), ),
+                onChanged: (value) => setState (() => selectedValue = 1)),
+            RadioListTile<int>(
+                value: 2, groupValue: selectedValue,
+                title: Text('Rest. Manager',  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold),),
+                onChanged: (value) => setState (() => selectedValue = 2)),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                minimumSize: Size.fromHeight(50),
+              ),
+              icon: Icon(Icons.navigate_next, size: 32,),
+              label: Text(
+                'Next',
+                style: TextStyle(fontSize: 24),
+              ),
+              onPressed: toNext,
+            ),
+          ],
+        )
+      )
+    );
+  }
+}
