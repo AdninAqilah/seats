@@ -1,0 +1,20 @@
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:fypseats/screens/home/sign_out.dart';
+
+class homeCust extends StatefulWidget {
+  const homeCust({Key? key}) : super(key: key);
+
+  @override
+  State<homeCust> createState() => _homeCustState();
+}
+
+class _homeCustState extends State<homeCust> {
+  //final user = FirebaseAuth.instance.currentUser!;
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: signOutPage(),
+    );
+  }
+}
