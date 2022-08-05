@@ -136,26 +136,26 @@ class _EditRestDetailsState extends State<EditRestDetails> {
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.lightGreen[900]),
                   ),
                 ),
-              Row( //second row
+              Row(
                 children: <Widget>[
                   Expanded(child:
                   DropdownButton<String>(
-                      value: selectedHour2,
-                      items: hours2
-                          .map((hours2) => DropdownMenuItem<String>(
-                          value: hours2,
-                          child: Text(hours2,style: TextStyle(fontSize: 18),))).toList(),
-                      onChanged: (hours2) => setState(() => selectedHour2 = hours2)),
+                      value: selectedHour,
+                      items: hours
+                          .map((hours) => DropdownMenuItem<String>(
+                          value: hours,
+                          child: Text(hours,style: TextStyle(fontSize: 18),))).toList(),
+                      onChanged: (hours) => setState(() => selectedHour = hours)),
                   ),
                   SizedBox(child: Text(':', style: TextStyle(fontWeight: FontWeight.bold),), width: 10,),
                   Expanded(child:
                   DropdownButton<String>(
-                      value: selectedMinute2,
-                      items: minutes2
-                          .map((minutes2) => DropdownMenuItem<String>(
-                          value: minutes2,
-                          child: Text(minutes2,style: TextStyle(fontSize: 18),))).toList(),
-                      onChanged: (minutes2) => setState(() => selectedMinute2 = minutes2)),
+                      value: selectedMinute,
+                      items: minutes
+                          .map((minutes) => DropdownMenuItem<String>(
+                          value: minutes,
+                          child: Text(minutes,style: TextStyle(fontSize: 18),))).toList(),
+                      onChanged: (minutes) => setState(() => selectedMinute = minutes)),
                   ),
                   Expanded(child:
                   DropdownButton<String>(
@@ -168,36 +168,36 @@ class _EditRestDetailsState extends State<EditRestDetails> {
                   ),
                 ],
               ),
-              Text('to', style: TextStyle(fontWeight: FontWeight.bold),),
-                Row(
+              Text('to', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.lightGreen[900]),),
+                Row( // second row
                   children: <Widget>[
                     Expanded(child:
                     DropdownButton<String>(
-                        value: selectedHour,
-                        items: hours
-                            .map((hours) => DropdownMenuItem<String>(
-                            value: hours,
-                            child: Text(hours,style: TextStyle(fontSize: 18),))).toList(),
-                        onChanged: (hours) => setState(() => selectedHour = hours)),
+                        value: selectedHour2,
+                        items: hours2
+                            .map((hours2) => DropdownMenuItem<String>(
+                            value: hours2,
+                            child: Text(hours2,style: TextStyle(fontSize: 18),))).toList(),
+                        onChanged: (hours2) => setState(() => selectedHour2 = hours2)),
                     ),
                     SizedBox(child: Text(':', style: TextStyle(fontWeight: FontWeight.bold),), width: 10,),
                     Expanded(child:
                     DropdownButton<String>(
-                        value: selectedMinute,
-                        items: minutes
-                            .map((minutes) => DropdownMenuItem<String>(
-                            value: minutes,
-                            child: Text(minutes,style: TextStyle(fontSize: 18),))).toList(),
-                        onChanged: (minutes) => setState(() => selectedMinute = minutes)),
+                        value: selectedMinute2,
+                        items: minutes2
+                            .map((minutes2) => DropdownMenuItem<String>(
+                            value: minutes2,
+                            child: Text(minutes2,style: TextStyle(fontSize: 18),))).toList(),
+                        onChanged: (minutes2) => setState(() => selectedMinute2 = minutes2)),
                     ),
                     Expanded(child:
                     DropdownButton<String>(
-                        value: selectedAmpm,
-                        items: ampm
-                            .map((ampm) => DropdownMenuItem<String>(
-                            value: ampm,
-                            child: Text(ampm,style: TextStyle(fontSize: 18),))).toList(),
-                        onChanged: (ampm) => setState(() => selectedAmpm = ampm)),
+                        value: selectedAmpm2,
+                        items: ampm2
+                            .map((ampm2) => DropdownMenuItem<String>(
+                            value: ampm2,
+                            child: Text(ampm2,style: TextStyle(fontSize: 18),))).toList(),
+                        onChanged: (ampm2) => setState(() => selectedAmpm2 = ampm2)),
                     ),
                   ],
                 ),
@@ -208,7 +208,8 @@ class _EditRestDetailsState extends State<EditRestDetails> {
                         operatingHours : [monChecked, tueChecked, wedChecked, thuChecked,
                         friChecked, satChecked, sunChecked]
                       );
-
+                      print(selectedHour.toString()+":"+selectedMinute.toString()+selectedAmpm.toString()+
+                      " to "+selectedHour2.toString()+":"+selectedMinute2.toString()+selectedAmpm2.toString());
                       updateDetails(user);
                     },
                     child: Text('Submit'))
@@ -216,6 +217,14 @@ class _EditRestDetailsState extends State<EditRestDetails> {
             )
         )
     );
+  }
+
+  bool checkValidOT(String h, String h2, String m, String m2, String ap, String ap2){
+    if (ap2 == 'AM' && ap == 'PM')
+
+      return false;
+    else
+    return true;
   }
 
   Future updateDetails(User user) async {
@@ -229,20 +238,10 @@ class _EditRestDetailsState extends State<EditRestDetails> {
     }catch(e){
       print(e);
     }
-
-    /*docUser.get().then((doc) async => {
-      if (doc.exists) {
-        //update data
-        docUser.update(json)
-      } else {
-        await docUser.set(json) //create document & write data
-      }
-    });*/
   }
 }
 
 class User {
-  //String id;
   final String name;
   final List<bool> operatingHours;
 
@@ -254,7 +253,6 @@ class User {
       );
 
   Map<String, dynamic> toJson() => {
-    //'id': id,
     'name': name,
     'operatingHours': operatingHours
   };
