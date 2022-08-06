@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 class EditRestDetails extends StatefulWidget {
   const EditRestDetails({Key? key}) : super(key: key);
@@ -205,12 +207,14 @@ class _EditRestDetailsState extends State<EditRestDetails> {
                     onPressed: () {
                       final user = User(
                         name : nameController.text,
-                        operatingHours : [monChecked, tueChecked, wedChecked, thuChecked,
-                        friChecked, satChecked, sunChecked]
+                        operatingDays : [monChecked, tueChecked, wedChecked, thuChecked,
+                        friChecked, satChecked, sunChecked],
+                        operatingHours: [timeToDouble(selectedHour.toString(), selectedMinute.toString(), selectedAmpm.toString()), timeToDouble(selectedHour2.toString(), selectedMinute2.toString(), selectedAmpm2.toString())]
                       );
-                      print(selectedHour.toString()+":"+selectedMinute.toString()+selectedAmpm.toString()+
-                      " to "+selectedHour2.toString()+":"+selectedMinute2.toString()+selectedAmpm2.toString());
-                      updateDetails(user);
+
+                      if (checkValidOT(selectedHour.toString(), selectedHour2.toString(), selectedMinute.toString(), selectedMinute2.toString(), selectedAmpm.toString(), selectedAmpm2.toString()))
+                        updateDetails(user);
+                      else showToast();
                     },
                     child: Text('Submit'))
               ],
@@ -219,12 +223,36 @@ class _EditRestDetailsState extends State<EditRestDetails> {
     );
   }
 
-  bool checkValidOT(String h, String h2, String m, String m2, String ap, String ap2){
-    if (ap2 == 'AM' && ap == 'PM')
+  void showToast() => Fluttertoast.showToast(
+    msg: "Please enter valid operating hours",
+    fontSize: 18,
+  );
 
-      return false;
+  bool checkValidOT(String h, String h2, String m, String m2, String ap, String ap2){
+    double open, close;
+    open = timeToDouble(h, m, ap);
+    close = timeToDouble(h2, m2, ap2);
+
+    if (open < close)
+      return true;
     else
-    return true;
+      return false;
+
+  }
+
+  double timeToDouble (String h, String m, String ap){
+    double time;
+
+    if (ap == 'AM' && h != '12')
+      time = double.parse(h);
+    else if (ap == 'AM' && h == '12')
+      time = 24;
+    else if (ap == 'PM' && h != '12')
+      time = double.parse(h)+12;
+    else
+      time = 12;
+
+    return time + double.parse(m)/60;
   }
 
   Future updateDetails(User user) async {
@@ -243,17 +271,20 @@ class _EditRestDetailsState extends State<EditRestDetails> {
 
 class User {
   final String name;
-  final List<bool> operatingHours;
+  final List<bool> operatingDays;
+  final List<double> operatingHours;
 
   User(
   {
     required this.name,
-    required this.operatingHours,
+    required this.operatingDays,
+    required this.operatingHours
   }
       );
 
   Map<String, dynamic> toJson() => {
     'name': name,
+    'operatingDays': operatingDays,
     'operatingHours': operatingHours
   };
 
