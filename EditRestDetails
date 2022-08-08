@@ -58,7 +58,7 @@ class _EditRestDetailsState extends State<EditRestDetails> {
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.lightGreen[900]),
                   ),
                 ),
-                TextField(
+                TextFormField(
                   controller: nameController,
                   decoration: InputDecoration(
                     border: OutlineInputBorder(),
@@ -254,6 +254,11 @@ class _EditRestDetailsState extends State<EditRestDetails> {
 
     return time + double.parse(m)/60;
   }
+
+  Stream<List<User>> readUsers() => FirebaseFirestore.instance.collection('restaurants')
+      .snapshots().
+  map((snapshot) =>
+      snapshot.docs.map((doc) => doc.data()).toList());
 
   Future updateDetails(User user) async {
     var currentUser = FirebaseAuth.instance.currentUser;
