@@ -42,10 +42,29 @@ class _EditRestDetailsState extends State<EditRestDetails> {
   List<String> ampm2 = ['AM', 'PM'];
   String? selectedAmpm = 'AM';
   String? selectedAmpm2 = 'AM';
+  String namefdb = "hallo";
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    CollectionReference user = FirebaseFirestore.instance.collection('restaurants');
+    String? uid = FirebaseAuth.instance.currentUser?.uid;
+    
+    return FutureBuilder<DocumentSnapshot>(
+        future: user.doc(uid).get(),
+        builder: (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot){
+          if (snapshot.hasError) {
+            return Text("Something went wrong");
+          }
+
+          if (snapshot.hasData && !snapshot.data!.exists) {
+            return Text("Document does not exist");
+          }
+          if (snapshot.connectionState == ConnectionState.done) {
+            Map<String, dynamic> data = snapshot.data!.data() as Map<String, dynamic>;
+            //namefdb = data['name'];
+            return
+
+     Container(
         padding: EdgeInsets.only(left: 32, right: 32),
         child: SingleChildScrollView(
             child: Column(
@@ -60,6 +79,7 @@ class _EditRestDetailsState extends State<EditRestDetails> {
                 ),
                 TextFormField(
                   controller: nameController,
+                  initialValue: namefdb,
                   decoration: InputDecoration(
                     border: OutlineInputBorder(),
                   ),
@@ -221,6 +241,10 @@ class _EditRestDetailsState extends State<EditRestDetails> {
             )
         )
     );
+          }
+          return Text("loading");
+        }
+    );
   }
 
   void showToast() => Fluttertoast.showToast(
@@ -255,10 +279,10 @@ class _EditRestDetailsState extends State<EditRestDetails> {
     return time + double.parse(m)/60;
   }
 
-  Stream<List<User>> readUsers() => FirebaseFirestore.instance.collection('restaurants')
+  /*Stream<List<User>> readUsers() => FirebaseFirestore.instance.collection('restaurants')
       .snapshots().
   map((snapshot) =>
-      snapshot.docs.map((doc) => doc.data()).toList());
+      snapshot.docs.map((doc) => User.fromJson(doc.data())).toList());*/
 
   Future updateDetails(User user) async {
     var currentUser = FirebaseAuth.instance.currentUser;
@@ -293,4 +317,9 @@ class User {
     'operatingHours': operatingHours
   };
 
+  /*static User fromJson(Map<String, dynamic> json) => User(
+      name: json['name'],
+    operatingDays: json['operatingDays'],
+    operatingHours: json['operatingHours']
+      );*/
 }
