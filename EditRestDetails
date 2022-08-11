@@ -12,7 +12,6 @@ class EditRestDetails extends StatefulWidget {
 }
 
 class _EditRestDetailsState extends State<EditRestDetails> {
-  final nameController = TextEditingController();
   bool monChecked = false;
   bool tueChecked = false;
   bool wedChecked = false;
@@ -42,12 +41,13 @@ class _EditRestDetailsState extends State<EditRestDetails> {
   List<String> ampm2 = ['AM', 'PM'];
   String? selectedAmpm = 'AM';
   String? selectedAmpm2 = 'AM';
-  String namefdb = "hallo";
 
   @override
   Widget build(BuildContext context) {
     CollectionReference user = FirebaseFirestore.instance.collection('restaurants');
     String? uid = FirebaseAuth.instance.currentUser?.uid;
+
+    //final nameController = TextEditingController(text: namefdb);
     
     return FutureBuilder<DocumentSnapshot>(
         future: user.doc(uid).get(),
@@ -61,7 +61,15 @@ class _EditRestDetailsState extends State<EditRestDetails> {
           }
           if (snapshot.connectionState == ConnectionState.done) {
             Map<String, dynamic> data = snapshot.data!.data() as Map<String, dynamic>;
-            //namefdb = data['name'];
+            final nameController = TextEditingController(text: data['name']);
+            monChecked = data['operatingDays'][0];
+            tueChecked = data['operatingDays'][1];
+            wedChecked = data['operatingDays'][2];
+            thuChecked = data['operatingDays'][3];
+            friChecked = data['operatingDays'][4];
+            satChecked = data['operatingDays'][5];
+            sunChecked = data['operatingDays'][6];
+
             return
 
      Container(
@@ -79,7 +87,6 @@ class _EditRestDetailsState extends State<EditRestDetails> {
                 ),
                 TextFormField(
                   controller: nameController,
-                  initialValue: namefdb,
                   decoration: InputDecoration(
                     border: OutlineInputBorder(),
                   ),
