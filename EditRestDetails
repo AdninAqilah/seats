@@ -46,8 +46,6 @@ class _EditRestDetailsState extends State<EditRestDetails> {
   Widget build(BuildContext context) {
     CollectionReference user = FirebaseFirestore.instance.collection('restaurants');
     String? uid = FirebaseAuth.instance.currentUser?.uid;
-
-    //final nameController = TextEditingController(text: namefdb);
     
     return FutureBuilder<DocumentSnapshot>(
         future: user.doc(uid).get(),
@@ -69,6 +67,12 @@ class _EditRestDetailsState extends State<EditRestDetails> {
             friChecked = data['operatingDays'][4];
             satChecked = data['operatingDays'][5];
             sunChecked = data['operatingDays'][6];
+            selectedHour = data['openTime'][0];
+            selectedMinute = data['openTime'][1];
+            selectedAmpm = data['openTime'][2];
+            selectedHour2 = data['closeTime'][0];
+            selectedMinute2 = data['closeTime'][1];
+            selectedAmpm2 = data['closeTime'][2];
 
             return
 
@@ -236,7 +240,9 @@ class _EditRestDetailsState extends State<EditRestDetails> {
                         name : nameController.text,
                         operatingDays : [monChecked, tueChecked, wedChecked, thuChecked,
                         friChecked, satChecked, sunChecked],
-                        operatingHours: [timeToDouble(selectedHour.toString(), selectedMinute.toString(), selectedAmpm.toString()), timeToDouble(selectedHour2.toString(), selectedMinute2.toString(), selectedAmpm2.toString())]
+                        openTime: [selectedHour.toString(), selectedMinute.toString(), selectedAmpm.toString()],
+                        closeTime: [selectedHour2.toString(), selectedMinute2.toString(), selectedAmpm2.toString()],
+                        //operatingHours: [timeToDouble(selectedHour.toString(), selectedMinute.toString(), selectedAmpm.toString()), timeToDouble(selectedHour2.toString(), selectedMinute2.toString(), selectedAmpm2.toString())]
                       );
 
                       if (checkValidOT(selectedHour.toString(), selectedHour2.toString(), selectedMinute.toString(), selectedMinute2.toString(), selectedAmpm.toString(), selectedAmpm2.toString()))
@@ -308,20 +314,23 @@ class _EditRestDetailsState extends State<EditRestDetails> {
 class User {
   final String name;
   final List<bool> operatingDays;
-  final List<double> operatingHours;
+  final List<String> openTime;
+  final List<String> closeTime;
 
   User(
   {
     required this.name,
     required this.operatingDays,
-    required this.operatingHours
+    required this.openTime,
+    required this.closeTime,
   }
       );
 
   Map<String, dynamic> toJson() => {
     'name': name,
     'operatingDays': operatingDays,
-    'operatingHours': operatingHours
+    'openTime': openTime,
+    'closeTime': closeTime,
   };
 
   /*static User fromJson(Map<String, dynamic> json) => User(
