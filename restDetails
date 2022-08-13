@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class restDetails extends StatefulWidget {
@@ -9,23 +10,198 @@ class restDetails extends StatefulWidget {
 }
 
 class _restDetailsState extends State<restDetails> {
+  bool monChecked = false;
+  bool tueChecked = false;
+  bool wedChecked = false;
+  bool thuChecked = false;
+  bool friChecked = false;
+  bool satChecked = false;
+  bool sunChecked = false;
+  String selectedHour = '1';
+  String selectedHour2 = '1';
+  String selectedMinute = '00';
+  String selectedMinute2 = '00';
+  String selectedAmpm = 'AM';
+  String selectedAmpm2 = 'AM';
+  String name = '';
+  String opHrs = '';
+  bool editName = false;
+  bool editOH = false;
+  final nameController = TextEditingController();
+
+  void toEditName() {
+    setState(() {
+      editName = true;
+    });
+  }
+
+  void toEditOH() {
+    setState(() {
+      editOH = true;
+    });
+  }
+
+  void toSubmitName() {
+    setState(() {
+      editName = false;
+    });
+    updateName();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.only(left: 32, right: 32),
-      child: SingleChildScrollView(
-        child: Column(
-          children: [
-            Text('Name'),
-            Text('')
-          ],
-        )
-      )
 
-    );
+    String? uid = FirebaseAuth.instance.currentUser?.uid;
+    CollectionReference user = FirebaseFirestore.instance.collection(
+        'restaurants');
+    var docUser = user.doc(uid);
 
+    return FutureBuilder<DocumentSnapshot>(
+        future: docUser.get(),
+        builder: (BuildContext context,
+            AsyncSnapshot<DocumentSnapshot> snapshot) {
+          if (snapshot.hasError) {
+            return Text("Something went wrong");
+          }
 
+          if (snapshot.hasData && !snapshot.data!.exists) {
+            return Text("Document does not exist");
+          }
+          if (snapshot.connectionState == ConnectionState.done) {
+            Map<String, dynamic> data = snapshot.data!.data() as Map<String,
+                dynamic>;
+            name = data['name'];
+            monChecked = data['operatingDays'][0];
+            tueChecked = data['operatingDays'][1];
+            wedChecked = data['operatingDays'][2];
+            thuChecked = data['operatingDays'][3];
+            friChecked = data['operatingDays'][4];
+            satChecked = data['operatingDays'][5];
+            sunChecked = data['operatingDays'][6];
+            selectedHour = data['openTime'][0];
+            selectedMinute = data['openTime'][1];
+            selectedAmpm = data['openTime'][2];
+            selectedHour2 = data['closeTime'][0];
+            selectedMinute2 = data['closeTime'][1];
+            selectedAmpm2 = data['closeTime'][2];
+
+            if(monChecked) opHrs = 'Mon,';
+            if(tueChecked) opHrs = opHrs + ' Tue,';
+            if(wedChecked) opHrs = opHrs + ' Wed,';
+            if(thuChecked) opHrs = opHrs + ' Thu,';
+            if(friChecked) opHrs = opHrs + ' Fri,';
+            if(satChecked) opHrs = opHrs + ' Sat,';
+            if(sunChecked) opHrs = opHrs + ' Sun,';
+
+            return Container(
+                padding: EdgeInsets.only(left: 32, right: 32),
+                child: SingleChildScrollView(
+                    child: Column(
+                      children: <Widget>[
+                        SizedBox(
+                          width: double.infinity,
+                          child: Text(
+                            'Name',
+                            textAlign: TextAlign.left,
+                            style: TextStyle(
+                                fontSize: 18, color: Colors.lightGreen[900]),
+                          ),
+                        ),
+                        if (!editName) Row(
+                          children: <Widget>[
+                            Text(name,
+                              textAlign: TextAlign.left,
+                              style: TextStyle(fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.blueAccent[900]),
+                            ),
+                            IconButton(onPressed: toEditName,
+                                icon: const Icon(Icons.edit))
+                          ],
+                        )
+                        else
+                          Row(
+                            children: <Widget>[
+                              Expanded(
+                                child: TextFormField(
+                                  controller: nameController,
+                                  decoration: InputDecoration(
+                                    border: OutlineInputBorder(),
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                child: IconButton(onPressed: toSubmitName,
+                                    icon: const Icon(Icons.check))
+                              ),
+                            ],
+                          ),
+                        SizedBox(
+                          width: double.infinity,
+                          child: Text(
+                            'Operating Days',
+                            textAlign: TextAlign.left,
+                            style: TextStyle(
+                                fontSize: 18, color: Colors.lightGreen[900]),
+                          ),
+                        ),
+                        if (!editOH) Row(
+                          children: <Widget>[
+                            Text(opHrs,
+                              textAlign: TextAlign.left,
+                              style: TextStyle(fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.blueAccent[900]),
+                            ),
+                            IconButton(onPressed: toEditOH,
+                                icon: const Icon(Icons.edit))
+                          ],
+                        )
+                        else Row(
+                          children: <Widget>[
+                            Expanded(child:
+                            CheckboxListTile(
+                              controlAffinity: ListTileControlAffinity.leading,
+                              title: Text('M'),
+                              value: monChecked,
+                              onChanged: (value) {
+                                setState(() => monChecked = value!);
+                              },
+                              activeColor: Colors.lightGreen[900],),)
+                          ],
+                        )
+                      ],
+                    )
+                )
+
+            );
+          }
+
+          return Text("loading");
+        });
   }
 
+  Future updateName() async {
+    var currentUser = FirebaseAuth.instance.currentUser;
+    final docUser = FirebaseFirestore.instance.collection('restaurants').doc(
+        currentUser?.uid);
+
+    docUser.update(
+        {
+          'name': nameController.text,
+        }
+    );
+  }
+
+  Future updateOH() async {
+    var currentUser = FirebaseAuth.instance.currentUser;
+    final docUser = FirebaseFirestore.instance.collection('restaurants').doc(
+        currentUser?.uid);
+
+    docUser.update(
+        {
+          'name': nameController.text,
+        }
+    );
+  }
 }
