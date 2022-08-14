@@ -157,7 +157,9 @@ class _restDetailsState extends State<restDetails> {
                                 icon: const Icon(Icons.edit))
                           ],
                         )
-                        else Row(
+                        else Column(
+                          children: <Widget>[
+                        Row(
                           children: <Widget>[
                             Expanded(child:
                             CheckboxListTile(
@@ -166,9 +168,62 @@ class _restDetailsState extends State<restDetails> {
                               value: monChecked,
                               onChanged: (value) {
                                 setState(() => monChecked = value!);
-                              },
-                              activeColor: Colors.lightGreen[900],),)
+                              },)),
+                            Expanded(child:
+                              CheckboxListTile(
+                              controlAffinity: ListTileControlAffinity.leading,
+                              title: Text('T'),
+                              value: tueChecked,
+                              onChanged: (value) {
+                              setState(() => tueChecked = value!);
+                              },)),
+                            Expanded(child:
+                            CheckboxListTile(
+                              controlAffinity: ListTileControlAffinity.leading,
+                              title: Text('W'),
+                              value: wedChecked,
+                              onChanged: (value) {
+                                setState(() => wedChecked = value!);
+                              },)),
+                            Expanded(child:
+                            CheckboxListTile(
+                              controlAffinity: ListTileControlAffinity.leading,
+                              title: Text('T'),
+                              value: thuChecked,
+                              onChanged: (value) {
+                                setState(() => thuChecked = value!);
+                              },)),
                           ],
+                        ),
+                        Row(
+                          children: <Widget>[
+                            Expanded(child:
+                            CheckboxListTile(
+                              controlAffinity: ListTileControlAffinity.leading,
+                              title: Text('F'),
+                              value: friChecked,
+                              onChanged: (value) {
+                                setState(() => friChecked = value!);
+                              },)),
+                            Expanded(child:
+                            CheckboxListTile(
+                              controlAffinity: ListTileControlAffinity.leading,
+                              title: Text('S'),
+                              value: satChecked,
+                              onChanged: (value) {
+                                setState(() => satChecked = value!);
+                              },)),
+                            Expanded(child:
+                            CheckboxListTile(
+                              controlAffinity: ListTileControlAffinity.leading,
+                              title: Text('S'),
+                              value: sunChecked,
+                              onChanged: (value) {
+                                setState(() => sunChecked = value!);
+                              },)),
+                          ],
+                        )
+                          ]
                         )
                       ],
                     )
