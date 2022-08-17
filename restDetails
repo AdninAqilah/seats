@@ -1,7 +1,12 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:image_picker/image_picker.dart';
 
 class restDetails extends StatefulWidget {
   const restDetails({Key? key}) : super(key: key);
@@ -47,6 +52,7 @@ class _restDetailsState extends State<restDetails> {
     '51', '52', '53', '4', '55', '56', '57', '58', '59',];
   List<String> ampm = ['AM', 'PM'];
   List<String> ampm2 = ['AM', 'PM'];
+  File? image;
 
   void toEditName() {
     setState(() {
@@ -306,7 +312,7 @@ class _restDetailsState extends State<restDetails> {
                                         child: Text(hours,style: TextStyle(fontSize: 18),))).toList(),
                                     onChanged: (hours) {
                                       setState(() => selectedHour = hours);
-
+                                      submitOT();
                                       }),
                                 ),
                                 SizedBox(child: Text(':', style: TextStyle(fontWeight: FontWeight.bold),), width: 10,),
@@ -319,7 +325,7 @@ class _restDetailsState extends State<restDetails> {
                                         child: Text(minutes,style: TextStyle(fontSize: 18),))).toList(),
                                     onChanged: (minutes){
                                       setState(() => selectedMinute = minutes);
-                                      updateOH();
+                                      submitOT();
                                       }),
                                 ),
                                 Expanded(child:
@@ -331,7 +337,7 @@ class _restDetailsState extends State<restDetails> {
                                         child: Text(ampm,style: TextStyle(fontSize: 18),))).toList(),
                                     onChanged: (ampm) {
                                       setState(() => selectedAmpm = ampm);
-                                      updateOH();
+                                      submitOT();
                                       }),
                                 ),
                               ],
@@ -348,7 +354,7 @@ class _restDetailsState extends State<restDetails> {
                                         child: Text(hours2,style: TextStyle(fontSize: 18),))).toList(),
                                     onChanged: (hours2) {
                                       setState(() => selectedHour2 = hours2);
-                                      updateOH;
+                                      submitOT();
                                       }),
                                 ),
                                 SizedBox(child: Text(':', style: TextStyle(fontWeight: FontWeight.bold),), width: 10,),
@@ -361,7 +367,7 @@ class _restDetailsState extends State<restDetails> {
                                         child: Text(minutes2,style: TextStyle(fontSize: 18),))).toList(),
                                     onChanged: (minutes2){
                                       setState(() => selectedMinute2 = minutes2);
-                                      updateOH();
+                                      submitOT();
                                     }),
                                 ),
                                 Expanded(child:
@@ -372,14 +378,30 @@ class _restDetailsState extends State<restDetails> {
                                         value: ampm2,
                                         child: Text(ampm2,style: TextStyle(fontSize: 18),))).toList(),
                                     onChanged: (ampm2){setState(() => selectedAmpm2 = ampm2);
-                                                updateOH();}),
+                                    submitOT();}),
                                 ),
                               ],
                             ),
                             IconButton(onPressed: toEditOH,
                                 icon: const Icon(Icons.check))
                           ],
-                        )
+                        ),
+                        SizedBox(
+                          width: double.infinity,
+                          child: Text(
+                            'Logo',
+                            textAlign: TextAlign.left,
+                            style: TextStyle(
+                                fontSize: 18, color: Colors.lightGreen[900]),
+                          ),
+                        ),
+                        //letak gambar logo from db
+                        ElevatedButton.icon(onPressed: pickImage,
+                            icon: Icon(Icons.image_outlined),
+                            label: Text('Upload Image')),
+                        image != null ? Image.file(image!,
+                        width: 160, height: 160, fit: BoxFit.cover
+                        ) : Text("no logo uploaded")
                       ],
                     )
                 )
@@ -389,6 +411,28 @@ class _restDetailsState extends State<restDetails> {
 
           return Text("loading");
         });
+  }
+
+  Future uploadLogo() async {
+    var currentUser = FirebaseAuth.instance.currentUser;
+    final path = 'files/${currentUser?.uid}/logo.jpg';
+    final logo = File(image!.path);
+
+    final ref = FirebaseStorage.instance.ref().child(path);
+    ref.putFile(logo);
+  }
+
+  Future pickImage() async {
+    try{
+      final image = await ImagePicker().pickImage(source: ImageSource.gallery);
+      if (image == null) return;
+
+      final imageTemporary = File(image.path);
+      setState(() => this.image = imageTemporary);
+      uploadLogo();
+    } on PlatformException catch (e) {
+      print("Failed to pick image: $e");
+    }
   }
 
   Future updateName() async {
