@@ -1,515 +1,69 @@
-import 'dart:io';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:fluttertoast/fluttertoast.dart';
-import 'package:image_picker/image_picker.dart';
 
-class restDetails extends StatefulWidget {
-  const restDetails({Key? key}) : super(key: key);
+class RestDetails2 extends StatefulWidget {
+  const RestDetails2({Key? key}) : super(key: key);
 
   @override
-  State<restDetails> createState() => _restDetailsState();
+  State<RestDetails2> createState() => _RestDetails2State();
 }
 
-class _restDetailsState extends State<restDetails> {
-  bool monChecked = false;
-  bool tueChecked = false;
-  bool wedChecked = false;
-  bool thuChecked = false;
-  bool friChecked = false;
-  bool satChecked = false;
-  bool sunChecked = false;
-  String? selectedHour = '1';
-  String? selectedHour2 = '1';
-  String? selectedMinute = '00';
-  String? selectedMinute2 = '00';
-  String? selectedAmpm = 'AM';
-  String? selectedAmpm2 = 'AM';
-  String name = '';
-  String opDays = '';
-  bool editName = false;
-  bool editOD = false;
-  bool editOH = false;
-  String opHrs = '';
+class _RestDetails2State extends State<RestDetails2> {
+  bool addDish = false;
   final nameController = TextEditingController();
-  List<String> hours = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
-  List<String> hours2 = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
-  List<String> minutes = ['00', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12',
-    '13', '14', '15', '16', '17', '18', '19', '20',
-    '21', '22', '23', '24', '25', '26', '27', '28', '29', '30',
-    '31', '32', '33', '34', '35', '36', '37', '38', '39', '40',
-    '41', '42', '43', '44', '45', '46', '47', '48', '49', '50',
-    '51', '52', '53', '4', '55', '56', '57', '58', '59',];
-  List<String> minutes2 = ['00', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12',
-    '13', '14', '15', '16', '17', '18', '19', '20',
-    '21', '22', '23', '24', '25', '26', '27', '28', '29', '30',
-    '31', '32', '33', '34', '35', '36', '37', '38', '39', '40',
-    '41', '42', '43', '44', '45', '46', '47', '48', '49', '50',
-    '51', '52', '53', '4', '55', '56', '57', '58', '59',];
-  List<String> ampm = ['AM', 'PM'];
-  List<String> ampm2 = ['AM', 'PM'];
-  File? image;
 
-  void toEditName() {
+  void toAddDish() {
     setState(() {
-      editName = true;
+      addDish = true;
     });
   }
 
-  void toEditOD() {
+  void toSubmitDish() {
+    addDishtoDB();
     setState(() {
-      editOD = !editOD;
+      addDish = true;
     });
-  }
-
-  void toSubmitOD() {
-    setState(() {
-      editOD = false;
-    });
-  }
-
-  void toEditOH() {
-    setState(() {
-      editOH = !editOH;
-    });
-  }
-
-  void toSubmitOH() {
-    setState(() {
-      editOH = false;
-    });
-  }
-
-  void toSubmitName() {
-    setState(() {
-      editName = false;
-    });
-    updateName();
   }
 
   @override
   Widget build(BuildContext context) {
-
-    String? uid = FirebaseAuth.instance.currentUser?.uid;
-    CollectionReference user = FirebaseFirestore.instance.collection(
-        'restaurants');
-    var docUser = user.doc(uid);
-
-    return FutureBuilder<DocumentSnapshot>(
-        future: docUser.get(),
-        builder: (BuildContext context,
-            AsyncSnapshot<DocumentSnapshot> snapshot) {
-          if (snapshot.hasError) {
-            return Text("Something went wrong");
-          }
-
-          if (snapshot.hasData && !snapshot.data!.exists) {
-            return Text("Document does not exist");
-          }
-          if (snapshot.connectionState == ConnectionState.done) {
-            Map<String, dynamic> data = snapshot.data!.data() as Map<String,
-                dynamic>;
-            name = data['name'];
-            monChecked = data['operatingDays'][0];
-            tueChecked = data['operatingDays'][1];
-            wedChecked = data['operatingDays'][2];
-            thuChecked = data['operatingDays'][3];
-            friChecked = data['operatingDays'][4];
-            satChecked = data['operatingDays'][5];
-            sunChecked = data['operatingDays'][6];
-            selectedHour = data['openTime'][0];
-            selectedMinute = data['openTime'][1];
-            selectedAmpm = data['openTime'][2];
-            selectedHour2 = data['closeTime'][0];
-            selectedMinute2 = data['closeTime'][1];
-            selectedAmpm2 = data['closeTime'][2];
-
-            if(monChecked) opDays = 'Mon,';
-            if(tueChecked) opDays = '$opDays Tue,';
-            if(wedChecked) opDays = '$opDays Wed,';
-            if(thuChecked) opDays = '$opDays Thu,';
-            if(friChecked) opDays = '$opDays Fri,';
-            if(satChecked) opDays = '$opDays Sat,';
-            if(sunChecked) opDays = '$opDays Sun,';
-            opHrs = selectedHour.toString() + ":" + selectedMinute.toString() + selectedAmpm.toString() + ' to ' + selectedHour2.toString() + ":" + selectedMinute2.toString() + selectedAmpm2.toString();
-
-            return Container(
-                padding: EdgeInsets.only(left: 32, right: 32),
-                child: SingleChildScrollView(
-                    child: Column(
-                      children: <Widget>[
-                        SizedBox(
-                          width: double.infinity,
-                          child: Text(
-                            'Name',
-                            textAlign: TextAlign.left,
-                            style: TextStyle(
-                                fontSize: 18, color: Colors.lightGreen[900]),
-                          ),
-                        ),
-                        if (!editName) Row(
-                          children: <Widget>[
-                            Text(name,
-                              textAlign: TextAlign.left,
-                              style: TextStyle(fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.blueAccent[900]),
-                            ),
-                            IconButton(onPressed: toEditName,
-                                icon: const Icon(Icons.edit))
-                          ],
-                        )
-                        else
-                          Row(
-                            children: <Widget>[
-                              Expanded(
-                                child: TextFormField(
-                                  controller: nameController,
-                                  decoration: InputDecoration(
-                                    border: OutlineInputBorder(),
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                child: IconButton(onPressed: toSubmitName,
-                                    icon: const Icon(Icons.check))
-                              ),
-                            ],
-                          ),
-                        SizedBox(
-                          width: double.infinity,
-                          child: Text(
-                            'Operating Days',
-                            textAlign: TextAlign.left,
-                            style: TextStyle(
-                                fontSize: 18, color: Colors.lightGreen[900]),
-                          ),
-                        ),
-                        if (!editOD) Row(
-                          children: <Widget>[
-                            Text(opDays,
-                              textAlign: TextAlign.left,
-                              style: TextStyle(fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.blueAccent[900]),
-                            ),
-                            IconButton(onPressed: toEditOD,
-                                icon: const Icon(Icons.edit))
-                          ],
-                        )
-                        else Column(
-                          children: <Widget>[
-                        Row(
-                          children: <Widget>[
-                            Expanded(child:
-                            CheckboxListTile(
-                              controlAffinity: ListTileControlAffinity.leading,
-                              title: Text('M'),
-                              value: monChecked,
-                              onChanged: (value) {
-                                setState(() => monChecked = value!);
-                                updateOD();
-                              },)),
-                            Expanded(child:
-                              CheckboxListTile(
-                              controlAffinity: ListTileControlAffinity.leading,
-                              title: Text('T'),
-                              value: tueChecked,
-                              onChanged: (value) {
-                              setState(() => tueChecked = value!);
-                              updateOD();
-                              },)),
-                            Expanded(child:
-                            CheckboxListTile(
-                              controlAffinity: ListTileControlAffinity.leading,
-                              title: Text('W'),
-                              value: wedChecked,
-                              onChanged: (value) {
-                                setState(() => wedChecked = value!);
-                                updateOD();
-                              },)),
-                            Expanded(child:
-                            CheckboxListTile(
-                              controlAffinity: ListTileControlAffinity.leading,
-                              title: Text('T'),
-                              value: thuChecked,
-                              onChanged: (value) {
-                                setState(() => thuChecked = value!);
-                                updateOD();
-                              },)),
-                          ],
-                        ),
-                        Row(
-                          children: <Widget>[
-                            Expanded(child:
-                            CheckboxListTile(
-                              controlAffinity: ListTileControlAffinity.leading,
-                              title: Text('F'),
-                              value: friChecked,
-                              onChanged: (value) {
-                                setState(() => friChecked = value!);
-                                updateOD();
-                              },)),
-                            Expanded(child:
-                            CheckboxListTile(
-                              controlAffinity: ListTileControlAffinity.leading,
-                              title: Text('S'),
-                              value: satChecked,
-                              onChanged: (value) {
-                                setState(() => satChecked = value!);
-                                updateOD();
-                              },)),
-                            Expanded(child:
-                            CheckboxListTile(
-                              controlAffinity: ListTileControlAffinity.leading,
-                              title: Text('S'),
-                              value: sunChecked,
-                              onChanged: (value) {
-                                setState(() => sunChecked = value!);
-                                updateOD();
-                              },)),
-                            IconButton(onPressed: toEditOD,
-                                icon: const Icon(Icons.check))
-                          ],
-                        )
-                          ]
-                        ), //ends operating days
-                        SizedBox(
-                          width: double.infinity,
-                          child: Text(
-                            'Operating Hours',
-                            textAlign: TextAlign.left,
-                            style: TextStyle(
-                                fontSize: 18, color: Colors.lightGreen[900]),
-                          ),
-                        ),
-                        if (!editOH) Row(
-                          children: <Widget>[
-                            Text(opHrs,
-                              textAlign: TextAlign.left,
-                              style: TextStyle(fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.blueAccent[900]),
-                            ),
-                            IconButton(onPressed: toEditOH,
-                                icon: const Icon(Icons.edit))
-                          ],
-                        )
-                        else Column(
-                          children: <Widget>[
-                            Row(
-                              children: <Widget>[
-                                Expanded(child:
-                                DropdownButton<String>(
-                                    value: selectedHour,
-                                    items: hours
-                                        .map((hours) => DropdownMenuItem<String>(
-                                        value: hours,
-                                        child: Text(hours,style: TextStyle(fontSize: 18),))).toList(),
-                                    onChanged: (hours) {
-                                      setState(() => selectedHour = hours);
-                                      submitOT();
-                                      }),
-                                ),
-                                SizedBox(child: Text(':', style: TextStyle(fontWeight: FontWeight.bold),), width: 10,),
-                                Expanded(child:
-                                DropdownButton<String>(
-                                    value: selectedMinute,
-                                    items: minutes
-                                        .map((minutes) => DropdownMenuItem<String>(
-                                        value: minutes,
-                                        child: Text(minutes,style: TextStyle(fontSize: 18),))).toList(),
-                                    onChanged: (minutes){
-                                      setState(() => selectedMinute = minutes);
-                                      submitOT();
-                                      }),
-                                ),
-                                Expanded(child:
-                                DropdownButton<String>(
-                                    value: selectedAmpm,
-                                    items: ampm
-                                        .map((ampm) => DropdownMenuItem<String>(
-                                        value: ampm,
-                                        child: Text(ampm,style: TextStyle(fontSize: 18),))).toList(),
-                                    onChanged: (ampm) {
-                                      setState(() => selectedAmpm = ampm);
-                                      submitOT();
-                                      }),
-                                ),
-                              ],
-                            ),
-                            Text('to', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.lightGreen[900]),),
-                            Row( // second row
-                              children: <Widget>[
-                                Expanded(child:
-                                DropdownButton<String>(
-                                    value: selectedHour2,
-                                    items: hours2
-                                        .map((hours2) => DropdownMenuItem<String>(
-                                        value: hours2,
-                                        child: Text(hours2,style: TextStyle(fontSize: 18),))).toList(),
-                                    onChanged: (hours2) {
-                                      setState(() => selectedHour2 = hours2);
-                                      submitOT();
-                                      }),
-                                ),
-                                SizedBox(child: Text(':', style: TextStyle(fontWeight: FontWeight.bold),), width: 10,),
-                                Expanded(child:
-                                DropdownButton<String>(
-                                    value: selectedMinute2,
-                                    items: minutes2
-                                        .map((minutes2) => DropdownMenuItem<String>(
-                                        value: minutes2,
-                                        child: Text(minutes2,style: TextStyle(fontSize: 18),))).toList(),
-                                    onChanged: (minutes2){
-                                      setState(() => selectedMinute2 = minutes2);
-                                      submitOT();
-                                    }),
-                                ),
-                                Expanded(child:
-                                DropdownButton<String>(
-                                    value: selectedAmpm2,
-                                    items: ampm2
-                                        .map((ampm2) => DropdownMenuItem<String>(
-                                        value: ampm2,
-                                        child: Text(ampm2,style: TextStyle(fontSize: 18),))).toList(),
-                                    onChanged: (ampm2){setState(() => selectedAmpm2 = ampm2);
-                                    submitOT();}),
-                                ),
-                              ],
-                            ),
-                            IconButton(onPressed: toEditOH,
-                                icon: const Icon(Icons.check))
-                          ],
-                        ),
-                        SizedBox(
-                          width: double.infinity,
-                          child: Text(
-                            'Logo',
-                            textAlign: TextAlign.left,
-                            style: TextStyle(
-                                fontSize: 18, color: Colors.lightGreen[900]),
-                          ),
-                        ),
-                        //letak gambar logo from db
-                        ElevatedButton.icon(onPressed: pickImage,
-                            icon: Icon(Icons.image_outlined),
-                            label: Text('Upload Image')),
-                        image != null ? Image.file(image!,
-                        width: 160, height: 160, fit: BoxFit.cover
-                        ) : Text("no logo uploaded")
-                      ],
-                    )
-                )
-
-            );
-          }
-
-          return Text("loading");
-        });
+    return Container(
+      child: Column(
+        children: [
+          if (addDish) Row(
+            children: <Widget>[
+              Expanded(
+                child: TextFormField(
+                  controller: nameController,
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ),
+              Expanded(
+                  child: IconButton(onPressed: toSubmitDish,
+                      icon: const Icon(Icons.check))
+              ),
+            ],
+          ),
+          ElevatedButton.icon(onPressed: toAddDish,
+              icon: Icon(Icons.add),
+              label: Text('Add dish')),
+        ],
+      )
+    );
   }
 
-  Future uploadLogo() async {
-    var currentUser = FirebaseAuth.instance.currentUser;
-    final path = 'files/${currentUser?.uid}/logo.jpg';
-    final logo = File(image!.path);
-
-    final ref = FirebaseStorage.instance.ref().child(path);
-    ref.putFile(logo);
-  }
-
-  Future pickImage() async {
-    try{
-      final image = await ImagePicker().pickImage(source: ImageSource.gallery);
-      if (image == null) return;
-
-      final imageTemporary = File(image.path);
-      setState(() => this.image = imageTemporary);
-      uploadLogo();
-    } on PlatformException catch (e) {
-      print("Failed to pick image: $e");
-    }
-  }
-
-  Future updateName() async {
+  Future addDishtoDB() async {
     var currentUser = FirebaseAuth.instance.currentUser;
     final docUser = FirebaseFirestore.instance.collection('restaurants').doc(
         currentUser?.uid);
 
     docUser.update(
         {
-          'name': nameController.text,
+          "dishNames": FieldValue.arrayUnion([nameController.text]),
         }
     );
   }
-
-  Future updateOD() async {
-    var currentUser = FirebaseAuth.instance.currentUser;
-    final docUser = FirebaseFirestore.instance.collection('restaurants').doc(
-        currentUser?.uid);
-
-    docUser.update(
-        {
-          'operatingDays': [monChecked, tueChecked, wedChecked, thuChecked,
-            friChecked, satChecked, sunChecked],
-        }
-    );
-  }
-
-  Future updateOH() async {
-    var currentUser = FirebaseAuth.instance.currentUser;
-    final docUser = FirebaseFirestore.instance.collection('restaurants').doc(
-        currentUser?.uid);
-
-    docUser.update(
-        {
-          'openTime': [selectedHour.toString(), selectedMinute.toString(), selectedAmpm.toString()],
-          'closeTime' : [selectedHour2.toString(), selectedMinute2.toString(), selectedAmpm2.toString()],
-        }
-    );
-  }
-
-  void submitOT(){
-    if (checkValidOT(selectedHour.toString(), selectedHour2.toString(), selectedMinute.toString(),
-        selectedMinute2.toString(), selectedAmpm.toString(), selectedAmpm2.toString()))
-      updateOH();
-    else
-      showToast();
-  }
-
-  bool checkValidOT(String h, String h2, String m, String m2, String ap, String ap2){
-    double open, close;
-    open = timeToDouble(h, m, ap);
-    close = timeToDouble(h2, m2, ap2);
-
-    if (open < close)
-      return true;
-    else
-      return false;
-
-  }
-
-  double timeToDouble (String h, String m, String ap){
-    double time;
-
-    if (ap == 'AM' && h != '12')
-      time = double.parse(h);
-    else if (ap == 'AM' && h == '12')
-      time = 24;
-    else if (ap == 'PM' && h != '12')
-      time = double.parse(h)+12;
-    else
-      time = 12;
-
-    return time + double.parse(m)/60;
-  }
-
-  void showToast() => Fluttertoast.showToast(
-    msg: "Please enter valid operating hours",
-    fontSize: 18,
-  );
 }
