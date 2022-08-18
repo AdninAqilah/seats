@@ -1,0 +1,69 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+
+class RestDetails2 extends StatefulWidget {
+  const RestDetails2({Key? key}) : super(key: key);
+
+  @override
+  State<RestDetails2> createState() => _RestDetails2State();
+}
+
+class _RestDetails2State extends State<RestDetails2> {
+  bool addDish = false;
+  final nameController = TextEditingController();
+
+  void toAddDish() {
+    setState(() {
+      addDish = true;
+    });
+  }
+
+  void toSubmitDish() {
+    addDishtoDB();
+    setState(() {
+      addDish = true;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      child: Column(
+        children: [
+          if (addDish) Row(
+            children: <Widget>[
+              Expanded(
+                child: TextFormField(
+                  controller: nameController,
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ),
+              Expanded(
+                  child: IconButton(onPressed: toSubmitDish,
+                      icon: const Icon(Icons.check))
+              ),
+            ],
+          ),
+          ElevatedButton.icon(onPressed: toAddDish,
+              icon: Icon(Icons.add),
+              label: Text('Add dish')),
+        ],
+      )
+    );
+  }
+
+  Future addDishtoDB() async {
+    var currentUser = FirebaseAuth.instance.currentUser;
+    final docUser = FirebaseFirestore.instance.collection('restaurants').doc(
+        currentUser?.uid);
+
+    docUser.update(
+        {
+          "dishNames": FieldValue.arrayUnion([nameController.text]),
+        }
+    );
+  }
+}
