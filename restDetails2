@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 class RestDetails2 extends StatefulWidget {
   const RestDetails2({Key? key}) : super(key: key);
@@ -12,6 +13,7 @@ class RestDetails2 extends StatefulWidget {
 class _RestDetails2State extends State<RestDetails2> {
   bool addDish = false;
   final nameController = TextEditingController();
+  final priceController = TextEditingController();
 
   void toAddDish() {
     setState(() {
@@ -20,42 +22,86 @@ class _RestDetails2State extends State<RestDetails2> {
   }
 
   void toSubmitDish() {
-    addDishtoDB();
-    setState(() {
-      addDish = true;
-    });
+    if (isNumeric(priceController.text)) {
+      addDishToDB();
+      nameController.clear();
+      priceController.clear();
+      setState(() {
+        addDish = false;
+      });
+    } else {
+      showToast();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      child: Column(
-        children: [
-          if (addDish) Row(
-            children: <Widget>[
-              Expanded(
-                child: TextFormField(
-                  controller: nameController,
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(),
+
+    String? uid = FirebaseAuth.instance.currentUser?.uid;
+    CollectionReference user = FirebaseFirestore.instance.collection(
+        'restaurants');
+    var docUser = user.doc(uid);
+
+    return FutureBuilder<DocumentSnapshot>(
+        future: docUser.get(),
+        builder: (BuildContext context,
+            AsyncSnapshot<DocumentSnapshot> snapshot) {
+          if (snapshot.hasError) {
+            return Text("Something went wrong");
+          }
+
+          if (snapshot.hasData && !snapshot.data!.exists) {
+            return Text("Document does not exist");
+          }
+          if (snapshot.connectionState == ConnectionState.done) {
+            Map<String, dynamic> data = snapshot.data!.data() as Map<String,
+                dynamic>;
+
+
+            return Container(
+                padding: const EdgeInsets.only(left: 32, right: 32),
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      if (addDish)
+                        Column(
+                          children: [
+                            TextFormField(
+                              controller: nameController,
+                              decoration: const InputDecoration(
+                                hintText: 'dish name',
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                            TextFormField(
+                              controller: priceController,
+                              decoration: const InputDecoration(
+                                hintText: 'dish price (without RM. eg: 5.50, 10)',
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                            IconButton(onPressed: toSubmitDish,
+                                icon: const Icon(Icons.check)),
+                          ],
+                        ),
+                      ElevatedButton.icon(onPressed: toAddDish,
+                          icon: const Icon(Icons.add),
+                          label: const Text('Add dish')),
+                    ],
                   ),
-                ),
-              ),
-              Expanded(
-                  child: IconButton(onPressed: toSubmitDish,
-                      icon: const Icon(Icons.check))
-              ),
-            ],
-          ),
-          ElevatedButton.icon(onPressed: toAddDish,
-              icon: Icon(Icons.add),
-              label: Text('Add dish')),
-        ],
-      )
+                )
+            );
+          }
+          return Text("loading");
+        }
     );
   }
 
-  Future addDishtoDB() async {
+  bool isNumeric(String s) {
+    return double.tryParse(s) != null;
+  }
+
+  Future addDishToDB() async {
     var currentUser = FirebaseAuth.instance.currentUser;
     final docUser = FirebaseFirestore.instance.collection('restaurants').doc(
         currentUser?.uid);
@@ -63,7 +109,13 @@ class _RestDetails2State extends State<RestDetails2> {
     docUser.update(
         {
           "dishNames": FieldValue.arrayUnion([nameController.text]),
+          "dishPrices": FieldValue.arrayUnion([priceController.text]),
         }
     );
   }
+
+  void showToast() => Fluttertoast.showToast(
+    msg: "Please enter valid price",
+    fontSize: 18,
+  );
 }
