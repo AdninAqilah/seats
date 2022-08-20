@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:fypseats/screens/home/restDetails.dart';
 
 class RestDetails2 extends StatefulWidget {
   const RestDetails2({Key? key}) : super(key: key);
@@ -56,13 +57,26 @@ class _RestDetails2State extends State<RestDetails2> {
           if (snapshot.connectionState == ConnectionState.done) {
             Map<String, dynamic> data = snapshot.data!.data() as Map<String,
                 dynamic>;
-
-
+            //List<String> dishNames = [];
+            //List<String> dishPrices= [];
+            int arrLength = data['dishNames'].length;
+//'${data['dishNames'][index]} - ${data['dishPrices'][index]}'
             return Container(
                 padding: const EdgeInsets.only(left: 32, right: 32),
                 child: SingleChildScrollView(
                   child: Column(
                     children: [
+                      ListView.builder(
+                          scrollDirection: Axis.vertical,
+                          shrinkWrap: true,
+                          itemCount: arrLength,
+                          itemBuilder: (context, index) {
+                            return SizedBox(
+                              height: 30,
+                                child: Text('${data['dishNames'][index]} - RM${data['dishPrices'][index]}',
+                                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),)
+                            );
+                          }),
                       if (addDish)
                         Column(
                           children: [
@@ -87,6 +101,14 @@ class _RestDetails2State extends State<RestDetails2> {
                       ElevatedButton.icon(onPressed: toAddDish,
                           icon: const Icon(Icons.add),
                           label: const Text('Add dish')),
+                      ElevatedButton.icon(
+                          onPressed: (){
+                            Navigator.push(context,
+                                MaterialPageRoute(builder: (context) => const restDetails())
+                            );
+                          },
+                          icon: const Icon(Icons.arrow_back),
+                          label: const Text('Go back')),
                     ],
                   ),
                 )
