@@ -1,0 +1,154 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+
+class AnnouncementsManager extends StatefulWidget {
+  const AnnouncementsManager({Key? key}) : super(key: key);
+
+  @override
+  State<AnnouncementsManager> createState() => _AnnouncementsManagerState();
+}
+
+class _AnnouncementsManagerState extends State<AnnouncementsManager> {
+  final textController = TextEditingController();
+  DateTime dateFrom = DateTime(2000, 1, 1);
+  DateTime dateUntil = DateTime(2000, 1, 1);
+
+  String getText(){
+    if (dateFrom == DateTime(2000, 1, 1)) {
+      return 'Select Date';
+    }
+    else{
+      return '${dateFrom.day}/${dateFrom.month}/${dateFrom.year}';
+    }
+  }
+
+  String getText2(){
+    if (dateUntil == DateTime(2000, 1, 1)) {
+      return 'Select Date';
+    }
+    else{
+      return '${dateUntil.day}/${dateUntil.month}/${dateUntil.year}';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      child: Column(
+        children: <Widget>[
+          const SizedBox(
+            height: 30,
+          ),
+          SizedBox(
+            height: 250,
+            width: 350,
+            child: TextFormField(
+              controller: textController,
+              decoration: const InputDecoration(
+                hintText: 'Enter announcement...',
+                border: OutlineInputBorder(),
+                //contentPadding: EdgeInsets.symmetric(vertical: 18.0,horizontal: 150.0),
+              ),
+              maxLines: 8,
+            )
+          ),
+          SizedBox(
+            width: double.infinity,
+            child: Text(
+              'Post from...',
+              textAlign: TextAlign.left,
+              style: TextStyle(
+                  fontSize: 18, color: Colors.lightGreen[900]),
+            ),
+          ),
+          ElevatedButton(
+              onPressed: () => pickDateFrom(context),
+              child: Text(getText())),
+          SizedBox(
+            width: double.infinity,
+            child: Text(
+              'Post until...',
+              textAlign: TextAlign.left,
+              style: TextStyle(
+                  fontSize: 18, color: Colors.lightGreen[900]),
+            ),
+          ),
+          ElevatedButton(
+              onPressed: () => pickDateUntil(context),
+              child: Text(getText2())),
+          ElevatedButton(
+              onPressed: addPostToDB,
+              child: const Text('Submit'))
+        ],
+      ),
+    );
+  }
+
+  Future pickDateFrom(BuildContext context) async {
+    final initialDate = DateTime.now();
+    final newDate = await showDatePicker(
+        context: context,
+        initialDate: initialDate,
+        firstDate: DateTime.now(),
+        lastDate: DateTime(DateTime.now().year + 1));
+
+    if (newDate == null) return;
+
+    setState(() => dateFrom = newDate);
+  }
+
+  Future pickDateUntil(BuildContext context) async {
+    final initialDate = DateTime.now();
+    final newDate = await showDatePicker(
+        context: context,
+        initialDate: initialDate,
+        firstDate: DateTime.now(),
+        lastDate: DateTime(DateTime.now().year + 1));
+
+    if (newDate == null) return;
+
+    setState(() => dateUntil = newDate);
+  }
+
+  Future addPostToDB() async {
+    var currentUser = FirebaseAuth.instance.currentUser;
+    final docUser = FirebaseFirestore.instance.collection('restaurants').doc(
+        currentUser?.uid);
+
+    if(textController.text == "" || dateUntil == DateTime(2000, 1, 1) || dateFrom == DateTime(2000, 1, 1)){
+      showToast();
+    }
+    else{
+      docUser.update(
+          {
+            'announcements': FieldValue.arrayUnion([textController.text]),
+            'annFrom': FieldValue.arrayUnion([dateFrom]),
+            'annUntil': FieldValue.arrayUnion([dateUntil]),
+          }
+      );
+      showToastSubmitted();
+    }
+  }
+
+  void showToast() => Fluttertoast.showToast(
+    msg: "Announcement/dates can't be empty",
+    fontSize: 18,
+  );
+
+  void showToastSubmitted() => Fluttertoast.showToast(
+    msg: "Announcement submitted",
+    fontSize: 18,
+  );
+}
+
+class ShowAnnouncementsList extends StatelessWidget {
+  const ShowAnnouncementsList({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container();
+  }
+}
+
