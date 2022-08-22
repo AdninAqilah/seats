@@ -14,6 +14,13 @@ class _AnnouncementsManagerState extends State<AnnouncementsManager> {
   final textController = TextEditingController();
   DateTime dateFrom = DateTime(2000, 1, 1);
   DateTime dateUntil = DateTime(2000, 1, 1);
+  bool showList = false;
+
+  void toViewList() {
+    setState(() {
+      showList = true;
+    });
+  }
 
   String getText(){
     if (dateFrom == DateTime(2000, 1, 1)) {
@@ -35,7 +42,8 @@ class _AnnouncementsManagerState extends State<AnnouncementsManager> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
+    if (!showList) {
+      return SingleChildScrollView(
       child: Column(
         children: <Widget>[
           const SizedBox(
@@ -80,10 +88,16 @@ class _AnnouncementsManagerState extends State<AnnouncementsManager> {
               child: Text(getText2())),
           ElevatedButton(
               onPressed: addPostToDB,
-              child: const Text('Submit'))
+              child: const Text('Submit')),
+          ElevatedButton(
+              onPressed: toViewList,
+              child: const Text('View Announcements')),
         ],
       ),
     );
+    } else {
+      return const ShowAnnouncementsList();
+    }
   }
 
   Future pickDateFrom(BuildContext context) async {
@@ -117,7 +131,8 @@ class _AnnouncementsManagerState extends State<AnnouncementsManager> {
     final docUser = FirebaseFirestore.instance.collection('restaurants').doc(
         currentUser?.uid);
 
-    if(textController.text == "" || dateUntil == DateTime(2000, 1, 1) || dateFrom == DateTime(2000, 1, 1)){
+    if(textController.text == "" || dateUntil == DateTime(2000, 1, 1) || dateFrom == DateTime(2000, 1, 1) ||
+    dateUntil.isBefore(dateFrom)){
       showToast();
     }
     else{
@@ -129,6 +144,7 @@ class _AnnouncementsManagerState extends State<AnnouncementsManager> {
           }
       );
       showToastSubmitted();
+      //toViewList();
     }
   }
 
@@ -148,7 +164,58 @@ class ShowAnnouncementsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container();
+    String? uid = FirebaseAuth.instance.currentUser?.uid;
+    CollectionReference user = FirebaseFirestore.instance.collection(
+        'restaurants');
+    var docUser = user.doc(uid);
+
+    return FutureBuilder<DocumentSnapshot>(
+        future: docUser.get(),
+        builder: (BuildContext context,
+            AsyncSnapshot<DocumentSnapshot> snapshot){
+          if (snapshot.hasError) {
+            return const Text("Something went wrong");
+          }
+          if (snapshot.hasData && !snapshot.data!.exists) {
+            return const Text("Document does not exist");
+          }
+          if (snapshot.connectionState == ConnectionState.done) {
+            Map<String, dynamic> data = snapshot.data!.data() as Map<String,
+                dynamic>;
+            int arrLength = data['announcements'].length;
+//
+            return ListView.builder(
+                  itemCount: arrLength,
+                  itemBuilder: (context, index){
+                    return Card(
+                      shadowColor: Colors.amber,
+                      elevation: 5,
+                      child: Padding(
+                        padding: const EdgeInsets.all(15),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${data['announcements'][index]}',
+                              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(
+                              height: 12,
+                            ),
+                            Text(
+                              'Post from ${data['annFrom'][index]} to ${data['annUntil'][index]}',
+                              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+              )
+            ;
+          }
+          return const Text("loading");
+        }
+    );
   }
 }
-
