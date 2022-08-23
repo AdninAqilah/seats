@@ -2,19 +2,49 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fypseats/screens/home/sign_out.dart';
 
-class homeCust extends StatefulWidget {
-  const homeCust({Key? key}) : super(key: key);
+class HomeCust extends StatefulWidget {
+  const HomeCust({Key? key}) : super(key: key);
 
   @override
-  State<homeCust> createState() => _homeCustState();
+  State<HomeCust> createState() => _HomeCustState();
 }
 
-class _homeCustState extends State<homeCust> {
+class _HomeCustState extends State<HomeCust> {
   //final user = FirebaseAuth.instance.currentUser!;
+  int index = 0;
+  final screens = [ //letak navigator instead
+    const Center(child: signOutPage()),
+  ];
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: signOutPage(),
+      appBar: AppBar(
+        title: const Text('SEATS'),),
+      body: screens[index],
+      bottomNavigationBar: NavigationBarTheme(
+        data: NavigationBarThemeData(
+          indicatorColor: Colors.greenAccent,
+          labelTextStyle: MaterialStateProperty.all(
+              const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)
+          ),
+        ),
+        child: NavigationBar(
+          height: 60,
+          backgroundColor: Colors.amber.shade100,
+          selectedIndex: index,
+          onDestinationSelected: (index) =>
+              setState(() => this.index = index),
+          destinations: const [
+            NavigationDestination(icon: Icon(Icons.home), label: 'Home'),
+            NavigationDestination(icon: Icon(Icons.table_bar), label: 'Available Tables'),
+            NavigationDestination(
+                icon: Icon(Icons.announcement), label: 'Announcement'),
+            NavigationDestination(
+                icon: Icon(Icons.question_mark), label: 'Guide'),
+          ],
+        ),
+
+      ),
     );
   }
 }
