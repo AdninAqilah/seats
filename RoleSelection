@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fypseats/screens/home/homeCust.dart';
 
@@ -18,32 +20,37 @@ class _RoleSelectionState extends State<RoleSelection> {
     setState(() {
       isPressed = true;
     });
+    if (selectedValue == 2) {
+      createDoc();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (isPressed && selectedValue == 1) return homeCust();
-    else if (isPressed && selectedValue == 2) return Home();
-    else
-    return Scaffold(
+    if (isPressed && selectedValue == 1) {
+      return const HomeCust();
+    } else if (isPressed && selectedValue == 2) {
+      return const Home();
+    } else {
+      return Scaffold(
       body: Center(
         child: Column(
           children: [
-            Text('You are a ...'),
+            const Text('You are a ...'),
             RadioListTile<int>(
                 value: 1, groupValue: selectedValue,
-                title: Text('Customer', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold), ),
+                title: const Text('Customer', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold), ),
                 onChanged: (value) => setState (() => selectedValue = 1)),
             RadioListTile<int>(
                 value: 2, groupValue: selectedValue,
-                title: Text('Rest. Manager',  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold),),
+                title: const Text('Rest. Manager',  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold),),
                 onChanged: (value) => setState (() => selectedValue = 2)),
             ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
-                minimumSize: Size.fromHeight(50),
+                minimumSize: const Size.fromHeight(50),
               ),
-              icon: Icon(Icons.navigate_next, size: 32,),
-              label: Text(
+              icon: const Icon(Icons.navigate_next, size: 32,),
+              label: const Text(
                 'Next',
                 style: TextStyle(fontSize: 24),
               ),
@@ -53,5 +60,34 @@ class _RoleSelectionState extends State<RoleSelection> {
         )
       )
     );
+    }
   }
+
+  Future createDoc() async {
+    var currentUser = FirebaseAuth.instance.currentUser;
+
+    final snapShot = await FirebaseFirestore.instance
+        .collection('restaurants')
+        .doc(currentUser?.uid)
+        .get();
+
+    final json = {
+      'name' : '',
+      'operatingDays': [false, false, false, false, false, false, false],
+      'openTime': ['1','00', 'AM'],
+      'closeTime': ['1','00', 'AM'],
+      'logoUrl': ' ',
+      'dishNames': [],
+      'dishPrices':[],
+    };
+
+    if (!snapShot.exists) {
+      try{
+      await FirebaseFirestore.instance.collection('restaurants').doc(currentUser?.uid).set(json);
+    }catch(e){
+      //print(e);
+    }
+    }
+  }
+
 }
