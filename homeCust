@@ -1,6 +1,7 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fypseats/screens/home/sign_out.dart';
+
+import 'guide.dart';
 
 class HomeCust extends StatefulWidget {
   const HomeCust({Key? key}) : super(key: key);
@@ -10,10 +11,12 @@ class HomeCust extends StatefulWidget {
 }
 
 class _HomeCustState extends State<HomeCust> {
-  //final user = FirebaseAuth.instance.currentUser!;
   int index = 0;
-  final screens = [ //letak navigator instead
+  final screens = [
     const Center(child: signOutPage()),
+    const Center(child: signOutPage()),
+    const Center(child: signOutPage()),
+    const Center(child: Guide()),
   ];
   @override
   Widget build(BuildContext context) {
