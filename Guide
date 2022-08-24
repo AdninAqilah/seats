@@ -1,42 +1,119 @@
 import 'package:flutter/material.dart';
 
 class Guide extends StatelessWidget {
+  const Guide({Key? key}) : super(key: key);
+
   @override
   Widget build (BuildContext context) {
-    return Container(
-      //color: Colors.green,
-        decoration: BoxDecoration(
-            color: Colors.amber.shade700,
-            border: Border.all(
-              color: Colors.green,
-              width: 8,
+    return Card(
+      shadowColor: Colors.amber,
+      color: Colors.amber[700],
+      elevation: 5,
+      child: Padding(
+        padding: const EdgeInsets.all(15.0),
+        child: RichText(
+            textScaleFactor: 1.2,
+            text: const TextSpan(
+              text: "To view tables availability\n",
+              style: TextStyle(fontWeight: FontWeight.bold),
+              children: <TextSpan>[
+                TextSpan(
+                  text: "-Tap on \"available tables\"\n"
+                      "-Tap on \"map\" to view nearby restaurants on a map or"
+                      "tap on \"list\" to view in a long list\n"
+                      "-Each restaurant is shown with the number of tables\n"
+                      "available for the restaurant\n\n",
+                ),
+                TextSpan(
+                  text: "To view menu\n",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                TextSpan(
+                  text: "-Tap on the restaurant to view the restaurant\n"
+                      "-Tap on \"menu\" to view menu of selected restaurant\n\n"
+                ),
+                TextSpan(
+                  text: "To add queue\n",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                TextSpan(
+                  text: "-Tap on the restaurant to view the restaurant\n"
+                      "-Tap on \"queue\"\n"
+                      "-Fill in number of pax\n"
+                      "-The estimated time is automatically shown\n"
+                      "based on the current time and number of pax\n"
+                      "-Tap \"submit\" if you agree to add queue\n"
+                      "-Details of queue will be displayed\n"
+                      "-Notifications will be frequently sent as reminders\n"
+                      "-Please note that your queue will be cancelled if you didn't show up after 10 minutes\n\n",
+                ),
+                TextSpan(
+                  text: "To view announcements\n",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                TextSpan(
+                    text: "-Tap \"announcements\" to view latest announcements"
+                        "from nearby restaurants"
+                )
+              ]
             )
-        ),
-      child: Text("To view tables availabilty\n"
-    "-Tap on \"available tables\"\n"
-    "-Tap on \"map\" to view nearby restaurants on a map or\n"
-    "tap on \"list\" to view in a long list\n"
-    "-Each restaurant is shown with the number of tables\n"
-    "available for the restaurant\n"
+        )
 
-    "To view menu\n"
-    "-Tap on the restaurant to view the restaurant\n"
-    "-Tap on \"menu\" to view menu of selected restaurant\n\n"
-
-    "To add queue\n"
-    "-Tap on the restaurant to view the restaurant\n"
-    "-Tap on \"queue\"\n"
-    "-Fill in number of pax\n"
-    "-The estimated time is automatically shown\n"
-    "based on the current time and number of pax\n"
-    "-Tap \"submit\" if you agree to add queue\n"
-    "-Details of queue will be displayed\n"
-    "-Notifications will be frequently sent as reminders\n"
-    "-Please note that your queue will be cancelled if you didn't show up after 10 minutes\n\n"
-
-    "To view announcements\n"
-    "-Tap \"announcements\" to view latest announcements\n"
-      "from nearby restaurants", style: TextStyle(color: Colors.white)),
-    );
+    ));
 }
+}
+
+class GuideManager extends StatelessWidget {
+  const GuideManager({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      shadowColor: Colors.amber,
+      color: Colors.amber[700],
+      elevation: 5,
+      child: Padding(
+        padding: const EdgeInsets.all(15),
+        child: RichText(
+          textScaleFactor: 1.2,
+          text: const TextSpan(
+            text: 'To update details of restaurant\n',
+            style: TextStyle(fontWeight: FontWeight.bold),
+            children: <TextSpan>[
+              TextSpan(text:
+              '- Tap on \'Details\' at the bottom bar\n'
+              '- You may add or edit the information of restaurants by tapping on the edit button for any detail\n'
+              '- Tap on \'Upload Image\' button to upload logo of the restaurant\n'
+              '- Tap on \'Edit Menu\' to go to the edit menu page\n\n'),
+              TextSpan(text:
+                  'To edit menu of restaurant',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              TextSpan(text:
+              '- Tap on \'Add Dish\' button to add dish of the menu\n'
+              '- Enter the name of dish and its price\n'
+              '- Tap \'Submit\' to add the dish to the menu\n\n'),
+              TextSpan(text:
+              'To add/view announcements\n',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              TextSpan(text:
+              '- Tap on \'Announcements\' at the bottom bar\n'
+              '- Type in the details you would like to announce to the customers\n'
+              '- Select duration of the announcement to be posted to customers\n'
+              '- Tap on \'Submit\' to submit the announcement\n'
+              '- You may view the announcements submitted by tapping on \'Announcements List\'\n\n'),
+              TextSpan(text:
+              'To sign out\n',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              TextSpan(text:
+                  'You may sign out by tapping on \'Home\' at the bottom bar then tap on \'Sign Out\''
+              )
+            ]
+          )
+        ),
+      )
+    );
+  }
 }
