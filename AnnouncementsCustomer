@@ -6,11 +6,56 @@ class AnnouncementsCustomer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container();
-  }
+    final annDoc = FirebaseFirestore.instance.collection('restaurants').doc(
+        'announcements');
 
-  Stream<List<User>> readUsers() => FirebaseFirestore.instance.collection('restaurants')
-      .snapshots()
-  .map((snapshot) =>
-  snapshot.docs.map((doc) => ).toList());
-}
+    return FutureBuilder<DocumentSnapshot>(
+        future: annDoc.get(),
+        builder: (BuildContext context,
+            AsyncSnapshot<DocumentSnapshot> snapshot){
+          if (snapshot.hasError) {
+            return const Text("Something went wrong");
+          }
+          if (snapshot.hasData && !snapshot.data!.exists) {
+            return const Text("Document does not exist");
+          }
+          if (snapshot.connectionState == ConnectionState.done) {
+            Map<String, dynamic> data = snapshot.data!.data() as Map<String,
+                dynamic>;
+            int arrLength = data['announcement'].length;
+//
+            return ListView.builder(
+                itemCount: arrLength,
+                itemBuilder: (context, index){
+                  return Card(
+                    shadowColor: Colors.amber,
+                    color: Colors.amber[700],
+                    elevation: 5,
+                    child: Padding(
+                      padding: const EdgeInsets.all(15),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${data['announcements'][index]}',
+                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(
+                            height: 12,
+                          ),
+                          Text(
+                            'Post from ${data['annFrom'][index].toDate()} to ${data['annUntil'][index].toDate()}',
+                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+            )
+            ;
+          }
+          return const Text("loading");
+        }
+    );
+  }}
