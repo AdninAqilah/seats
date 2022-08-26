@@ -130,6 +130,8 @@ class _AnnouncementsManagerState extends State<AnnouncementsManager> {
     var currentUser = FirebaseAuth.instance.currentUser;
     final docUser = FirebaseFirestore.instance.collection('restaurants').doc(
         currentUser?.uid);
+    final annDoc = FirebaseFirestore.instance.collection('restaurants').doc(
+        'announcements');
 
     if(textController.text == "" || dateUntil == DateTime(2000, 1, 1) || dateFrom == DateTime(2000, 1, 1) ||
     dateUntil.isBefore(dateFrom)){
@@ -142,6 +144,14 @@ class _AnnouncementsManagerState extends State<AnnouncementsManager> {
             'annFrom': FieldValue.arrayUnion([dateFrom]),
             'annUntil': FieldValue.arrayUnion([dateUntil]),
           }
+      );
+      annDoc.update(
+        {
+          'announcements': FieldValue.arrayUnion([textController.text]),
+          'annFrom': FieldValue.arrayUnion([dateFrom]),
+          'annUntil': FieldValue.arrayUnion([dateUntil]),
+          'restName': FirebaseAuth.instance.currentUser
+        }
       );
       showToastSubmitted();
       //toViewList();
@@ -189,6 +199,7 @@ class ShowAnnouncementsList extends StatelessWidget {
                   itemBuilder: (context, index){
                     return Card(
                       shadowColor: Colors.amber,
+                      color: Colors.amber[700],
                       elevation: 5,
                       child: Padding(
                         padding: const EdgeInsets.all(15),
@@ -197,14 +208,14 @@ class ShowAnnouncementsList extends StatelessWidget {
                           children: [
                             Text(
                               '${data['announcements'][index]}',
-                              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                             ),
                             const SizedBox(
                               height: 12,
                             ),
                             Text(
-                              'Post from ${data['annFrom'][index]} to ${data['annUntil'][index]}',
-                              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                              'Post from ${data['annFrom'][index].toDate()} to ${data['annUntil'][index].toDate()}',
+                              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                             ),
                           ],
                         ),
@@ -219,3 +230,4 @@ class ShowAnnouncementsList extends StatelessWidget {
     );
   }
 }
+
