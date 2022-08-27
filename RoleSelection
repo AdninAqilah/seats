@@ -79,6 +79,9 @@ class _RoleSelectionState extends State<RoleSelection> {
       'logoUrl': ' ',
       'dishNames': [],
       'dishPrices':[],
+      'announcements':[],
+      'annFrom':[],
+      'annUntil':[]
     };
 
     if (!snapShot.exists) {
