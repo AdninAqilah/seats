@@ -22,7 +22,7 @@ class AnnouncementsCustomer extends StatelessWidget {
           if (snapshot.connectionState == ConnectionState.done) {
             Map<String, dynamic> data = snapshot.data!.data() as Map<String,
                 dynamic>;
-            int arrLength = data['announcement'].length;
+            int arrLength = data['annID'].length;
 //
             return ListView.builder(
                 itemCount: arrLength,
@@ -37,15 +37,12 @@ class AnnouncementsCustomer extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            '${data['announcements'][index]}',
+                            '${data['${data['${data['annID'][index]}'][0]}']}\n\n'
+                            '${data['${data['annID'][index]}'][1]}',
                             style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(
                             height: 12,
-                          ),
-                          Text(
-                            'Post from ${data['annFrom'][index].toDate()} to ${data['annUntil'][index].toDate()}',
-                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                           ),
                         ],
                       ),
