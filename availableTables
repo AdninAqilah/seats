@@ -1,0 +1,70 @@
+import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter/material.dart';
+
+class AvailableTables extends StatefulWidget {
+  const AvailableTables({Key? key}) : super(key: key);
+
+  @override
+  State<AvailableTables> createState() => _AvailableTablesState();
+}
+
+class _AvailableTablesState extends State<AvailableTables> {
+  DatabaseReference ref = FirebaseDatabase.instance.ref("numOfRests");
+  int numOfRests = 0;
+  List<String> nameList = [];
+  List<int> numOfTablesList = [];
+  bool end = false;
+
+  Future getData() async{
+    DatabaseEvent event = await ref.once();
+    setState(() {
+      numOfRests = event.snapshot.value as int;
+    });
+
+    for(int i=0; i<numOfRests; i++){
+      DatabaseReference ref2 = FirebaseDatabase.instance.ref("rest$i/name");
+      DatabaseReference ref3 = FirebaseDatabase.instance.ref("rest$i/numOfTables");
+      DatabaseEvent event2 = await ref2.once();
+      DatabaseEvent event3 = await ref3.once();
+      setState(() {
+        nameList.add(event2.snapshot.value as String);
+      });
+      setState(() {
+        numOfTablesList.add(event3.snapshot.value as int);
+      });
+    }
+    setState(() {
+      end = true;
+    });
+    print("num of tables list:");
+    print(numOfTablesList);
+    print(nameList);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!end) {
+      if(numOfRests==0) getData();
+      return const CircularProgressIndicator();
+
+    } else {
+      return ListView.builder(
+          itemCount: numOfRests,
+          itemBuilder: (context, index){
+            return Row(
+                children: <Widget>[
+                ElevatedButton(
+                onPressed: () {  },
+            style: ElevatedButton.styleFrom(fixedSize: const Size(280, 50)),
+            child: Text(nameList[index]),
+            ),
+            Text(numOfTablesList[index].toString()),
+            const Icon(Icons.table_bar),
+
+            ]
+            );
+          }
+      );
+    }
+  }
+}
