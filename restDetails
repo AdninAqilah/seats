@@ -1,11 +1,12 @@
 import 'dart:io';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:fypseats/screens/home/restDetails2.dart';
 import 'package:image_picker/image_picker.dart';
 
 class restDetails extends StatefulWidget {
@@ -54,6 +55,13 @@ class _restDetailsState extends State<restDetails> {
   List<String> ampm2 = ['AM', 'PM'];
   File? image;
   String imageUrl = ' ';
+  bool editMenu = false;
+
+  void toEditMenu() {
+    setState(() {
+      editMenu = !editMenu;
+    });
+  }
 
   void toEditName() {
     setState(() {
@@ -100,16 +108,19 @@ class _restDetailsState extends State<restDetails> {
         'restaurants');
     var docUser = user.doc(uid);
 
-    return FutureBuilder<DocumentSnapshot>(
+    if (editMenu) {
+      return const RestDetails2();
+    } else {
+      return FutureBuilder<DocumentSnapshot>(
         future: docUser.get(),
         builder: (BuildContext context,
             AsyncSnapshot<DocumentSnapshot> snapshot) {
           if (snapshot.hasError) {
-            return Text("Something went wrong");
+            return const Text("Something went wrong");
           }
 
           if (snapshot.hasData && !snapshot.data!.exists) {
-            return Text("Document does not exist");
+            return const Text("Document does not exist");
           }
           if (snapshot.connectionState == ConnectionState.done) {
             Map<String, dynamic> data = snapshot.data!.data() as Map<String,
@@ -402,7 +413,7 @@ class _restDetailsState extends State<restDetails> {
                         ElevatedButton.icon(onPressed: pickImage,
                             icon: Icon(Icons.image_outlined),
                             label: Text('Upload Image')),
-
+                        ElevatedButton(onPressed: toEditMenu, child: Text('Edit Menu'))
                       ],
                     )
                 )
@@ -412,6 +423,7 @@ class _restDetailsState extends State<restDetails> {
 
           return Text("loading");
         });
+    }
   }
 
   Future uploadLogo() async {
@@ -452,12 +464,29 @@ class _restDetailsState extends State<restDetails> {
     var currentUser = FirebaseAuth.instance.currentUser;
     final docUser = FirebaseFirestore.instance.collection('restaurants').doc(
         currentUser?.uid);
+    final docUser2 = FirebaseFirestore.instance.collection('restaurants').doc(
+        'announcements');
+    var uid = currentUser?.uid;
 
     docUser.update(
         {
           'name': nameController.text,
         }
     );
+
+    docUser2.update(
+        {
+          '$uid': nameController.text,
+        }
+    );
+
+    DatabaseReference ref = FirebaseDatabase.instance.ref("uids/$uid");
+    DatabaseEvent event = await ref.once();
+    String restID = event.snapshot.value as String; //rest2
+    DatabaseReference ref2 = FirebaseDatabase.instance.ref(restID);
+    await ref2.update({
+      "name": nameController.text
+    });
   }
 
   Future updateOD() async {
