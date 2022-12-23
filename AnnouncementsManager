@@ -130,8 +130,40 @@ class _AnnouncementsManagerState extends State<AnnouncementsManager> {
     var currentUser = FirebaseAuth.instance.currentUser;
     final docUser = FirebaseFirestore.instance.collection('restaurants').doc(
         currentUser?.uid);
-    final annDoc = FirebaseFirestore.instance.collection('restaurants').doc(
-        'announcements');
+    final annDoc = FirebaseFirestore.instance.collection('restaurants').doc('announcements');
+    DateTime currentTime = DateTime.now();
+    final date = DateTime.utc(2022, 9, 9);
+    final difference = currentTime.difference(date).inMinutes;
+
+    String getName(){
+      String name = "none";
+      FutureBuilder<DocumentSnapshot>(
+        future: docUser.get(),
+        builder:
+            (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
+
+          if (snapshot.hasError) {
+            return Text("Something went wrong");
+          }
+
+          if (snapshot.hasData && !snapshot.data!.exists) {
+            return Text("Document does not exist");
+          }
+
+          if (snapshot.connectionState == ConnectionState.done) {
+            Map<String, dynamic> data = snapshot.data!.data() as Map<String, dynamic>;
+            name = data['name'];
+            print(data['name']);
+            print("hello");
+            //return Text("Full Name: ${data['full_name']} ${data['last_name']}");
+          }
+
+          return Text("loading");
+        },
+      );
+
+      return name;
+    }
 
     if(textController.text == "" || dateUntil == DateTime(2000, 1, 1) || dateFrom == DateTime(2000, 1, 1) ||
     dateUntil.isBefore(dateFrom)){
@@ -140,21 +172,18 @@ class _AnnouncementsManagerState extends State<AnnouncementsManager> {
     else{
       docUser.update(
           {
-            'announcements': FieldValue.arrayUnion([textController.text]),
-            'annFrom': FieldValue.arrayUnion([dateFrom]),
-            'annUntil': FieldValue.arrayUnion([dateUntil]),
+            'announcement$difference' : [textController.text, dateFrom, dateUntil],
+            'annNum': FieldValue.arrayUnion([difference])
           }
       );
       annDoc.update(
         {
-          'announcements': FieldValue.arrayUnion([textController.text]),
-          'annFrom': FieldValue.arrayUnion([dateFrom]),
-          'annUntil': FieldValue.arrayUnion([dateUntil]),
-          'restName': FirebaseAuth.instance.currentUser
+          'annID': FieldValue.arrayUnion(['${currentUser?.uid}$difference']),
+          '${currentUser?.uid}$difference': [currentUser?.uid, textController.text, dateFrom, dateUntil]
         }
       );
       showToastSubmitted();
-      //toViewList();
+      print(getName());
     }
   }
 
@@ -192,7 +221,7 @@ class ShowAnnouncementsList extends StatelessWidget {
           if (snapshot.connectionState == ConnectionState.done) {
             Map<String, dynamic> data = snapshot.data!.data() as Map<String,
                 dynamic>;
-            int arrLength = data['announcements'].length;
+            int arrLength = data['annNum'].length;
 //
             return ListView.builder(
                   itemCount: arrLength,
@@ -207,14 +236,14 @@ class ShowAnnouncementsList extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              '${data['announcements'][index]}',
+                              '${data['announcement${data['annNum'][index]}'][0]}',
                               style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                            ),
+                            ), //${data['announcement${data['annNum'][index]}'][0]}
                             const SizedBox(
                               height: 12,
                             ),
                             Text(
-                              'Post from ${data['annFrom'][index].toDate()} to ${data['annUntil'][index].toDate()}',
+                              'Post from ${data['announcement${data['annNum'][index]}'][1].toDate()} to ${data['announcement${data['annNum'][index]}'][2].toDate()}',
                               style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                             ),
                           ],
