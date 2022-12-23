@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:fypseats/screens/home/homeCust.dart';
 
@@ -16,6 +17,7 @@ class _RoleSelectionState extends State<RoleSelection> {
   int selectedValue = 0;
   bool isPressed = false;
 
+
   void toNext() {
     setState(() {
       isPressed = true;
@@ -29,6 +31,7 @@ class _RoleSelectionState extends State<RoleSelection> {
   Widget build(BuildContext context) {
     if (isPressed && selectedValue == 1) {
       return const HomeCust();
+      //Navigator.push(context, MaterialPageRoute(builder: (context) => const HomeCust()));
     } else if (isPressed && selectedValue == 2) {
       return const Home();
     } else {
@@ -45,6 +48,8 @@ class _RoleSelectionState extends State<RoleSelection> {
                 value: 2, groupValue: selectedValue,
                 title: const Text('Rest. Manager',  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold),),
                 onChanged: (value) => setState (() => selectedValue = 2)),
+
+
             ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size.fromHeight(50),
@@ -65,10 +70,11 @@ class _RoleSelectionState extends State<RoleSelection> {
 
   Future createDoc() async {
     var currentUser = FirebaseAuth.instance.currentUser;
+    var uid = currentUser?.uid;
 
     final snapShot = await FirebaseFirestore.instance
         .collection('restaurants')
-        .doc(currentUser?.uid)
+        .doc(uid)
         .get();
 
     final json = {
@@ -79,9 +85,7 @@ class _RoleSelectionState extends State<RoleSelection> {
       'logoUrl': ' ',
       'dishNames': [],
       'dishPrices':[],
-      'announcements':[],
-      'annFrom':[],
-      'annUntil':[]
+      'annNum':[],
     };
 
     if (!snapShot.exists) {
@@ -90,6 +94,31 @@ class _RoleSelectionState extends State<RoleSelection> {
     }catch(e){
       //print(e);
     }
+    }
+
+    DatabaseReference ref3 = FirebaseDatabase.instance.ref("uids/$uid");
+    DatabaseEvent event3 = await ref3.once();
+    if(!event3.snapshot.exists){
+
+    DatabaseReference ref = FirebaseDatabase.instance.ref("/");
+    DatabaseReference ref2 = FirebaseDatabase.instance.ref("numOfRests");
+    DatabaseReference ref4 = FirebaseDatabase.instance.ref("uids");
+    //retrieve numOfRests
+    DatabaseEvent event2 = await ref2.once();
+    int numOfRests = event2.snapshot.value as int;
+    int newNum = numOfRests + 1;
+    //add to realtime db
+    await ref.update({
+      "rest$numOfRests": {
+        "name": "unavailable",
+        "numOfTables": 0,
+      },
+      "numOfRests": newNum,
+    });
+
+    await ref4.update({
+      uid.toString() : "rest$numOfRests",
+    });
     }
   }
 
