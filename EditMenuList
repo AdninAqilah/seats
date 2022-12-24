@@ -1,0 +1,140 @@
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter/material.dart';
+
+class EditMenuList extends StatefulWidget {
+  const EditMenuList({Key? key}) : super(key: key);
+
+  @override
+  State<EditMenuList> createState() => _EditMenuListState();
+}
+
+class _EditMenuListState extends State<EditMenuList> {
+  var currentUser = FirebaseAuth.instance.currentUser;
+  String restID = "";
+  int menuSize = 0;
+  List<String> dishList = [];
+  List<String> priceList = [];
+  bool end = false;
+  bool start = false;
+  bool addDish = false;
+  final nameController = TextEditingController();
+  final priceController = TextEditingController();
+
+  Future<void> toSubmitDish() async {
+    if (double.tryParse(priceController.text) != null) {
+      DatabaseReference ref = FirebaseDatabase.instance.ref("$restID/dishes");
+      DatabaseReference ref2 = FirebaseDatabase.instance.ref("$restID/prices");
+      await ref.update({
+        "dish$menuSize" : nameController.text
+      });
+      await ref2.update({
+        "price$menuSize" : priceController.text
+      });
+      nameController.clear();
+      priceController.clear();
+      setState(() {
+        menuSize++;
+      });
+      setState(() {
+        addDish = false;
+      });
+    } else {
+      //showToast();
+    }
+  }
+
+  void toAddDish() {
+    setState(() {
+      addDish = true;
+    });
+  }
+
+  Future getData() async{
+    setState(() {
+      start = true;
+    });
+    var uid = currentUser?.uid;
+    DatabaseReference ref = FirebaseDatabase.instance.ref("uids/$uid");
+    DatabaseEvent event = await ref.once();
+    setState(() {
+      restID = event.snapshot.value as String; //rest2
+    });
+
+    DatabaseReference ref2 = FirebaseDatabase.instance.ref("$restID/menuSize");
+    DatabaseEvent event2 = await ref2.once();
+    setState(() {
+      menuSize = event2.snapshot.value as int;
+    });
+
+    for(int i=0; i<menuSize; i++){
+      DatabaseReference ref3 = FirebaseDatabase.instance.ref("$restID/dishes/dish$i");
+      DatabaseReference ref4 = FirebaseDatabase.instance.ref("$restID/prices/price$i");
+      DatabaseEvent event3 = await ref3.once();
+      DatabaseEvent event4 = await ref4.once();
+      setState(() {
+        dishList.add(event3.snapshot.value as String);
+      });
+      setState(() {
+        priceList.add(event4.snapshot.value as String);
+      });
+    }
+    setState(() {
+      end = true;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!end){
+      if(!start)getData();
+      return const CircularProgressIndicator();
+    }
+    else {
+      return Container(
+        padding: const EdgeInsets.only(left: 32, right: 32),
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              ListView.builder(
+                  scrollDirection: Axis.vertical,
+                  shrinkWrap: true,
+                itemCount: menuSize,
+                itemBuilder: (context, index){
+                  return SizedBox(
+                    height: 30,
+                    child: Text("${dishList[index]} - RM${priceList[index]}",
+                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),),
+                  );
+                }),
+              if (addDish)
+                Column(
+                  children: [
+                    TextFormField(
+                      controller: nameController,
+                      decoration: const InputDecoration(
+                        hintText: 'dish name',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    TextFormField(
+                      controller: priceController,
+                      decoration: const InputDecoration(
+                        hintText: 'dish price (without RM. eg: 5.50, 10)',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    IconButton(onPressed: toSubmitDish,
+                        icon: const Icon(Icons.check)),
+                  ],
+                ),
+              ElevatedButton.icon(onPressed: toAddDish,
+                  icon: const Icon(Icons.add),
+                  label: const Text('Add dish')),
+            ],
+          ),
+        ),
+      );
+    }
+  }
+}
