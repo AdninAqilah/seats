@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 class EditMenuList extends StatefulWidget {
   const EditMenuList({Key? key}) : super(key: key);
@@ -25,22 +26,28 @@ class _EditMenuListState extends State<EditMenuList> {
     if (double.tryParse(priceController.text) != null) {
       DatabaseReference ref = FirebaseDatabase.instance.ref("$restID/dishes");
       DatabaseReference ref2 = FirebaseDatabase.instance.ref("$restID/prices");
+      DatabaseReference ref3 = FirebaseDatabase.instance.ref(restID);
+      dishList.add(nameController.text);
+      priceList.add(priceController.text);
       await ref.update({
         "dish$menuSize" : nameController.text
       });
       await ref2.update({
         "price$menuSize" : priceController.text
       });
-      nameController.clear();
-      priceController.clear();
       setState(() {
         menuSize++;
       });
+      await ref3.update({
+        "menuSize" : menuSize
+      });
+      nameController.clear();
+      priceController.clear();
       setState(() {
         addDish = false;
       });
     } else {
-      //showToast();
+      showToast();
     }
   }
 
@@ -49,6 +56,11 @@ class _EditMenuListState extends State<EditMenuList> {
       addDish = true;
     });
   }
+
+  void showToast() => Fluttertoast.showToast(
+    msg: "Please enter valid price",
+    fontSize: 18,
+  );
 
   Future getData() async{
     setState(() {
