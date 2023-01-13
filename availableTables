@@ -1,5 +1,9 @@
+import 'dart:math';
+
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 class AvailableTables extends StatefulWidget {
   const AvailableTables({Key? key}) : super(key: key);
@@ -13,7 +17,34 @@ class _AvailableTablesState extends State<AvailableTables> {
   int numOfRests = 0;
   List<String> nameList = [];
   List<int> numOfTablesList = [];
+  List<String> dishList = [];
+  List<String> priceList = [];
   bool end = false;
+  bool selectRest = false;
+  bool viewMenu = false;
+  String selectedRest = "";
+  String logoURL = "";
+  int menuSize = 0;
+  String menuString = "";
+  bool menuOnce = false;
+  bool viewQueue = false;
+  final nOPController = TextEditingController();
+  final phoneNoController = TextEditingController();
+  int totalTables = 0;
+  String estTime = "";
+  bool showTime = false;
+  int noOfTablesAssigned = 0;
+  int pax = 0;
+  bool showQueueInfo = false;
+  String queueString = "";
+
+  Future<void> toShowLogo() async {
+    DatabaseReference ref = FirebaseDatabase.instance.ref("$selectedRest/logoURL");
+    DatabaseEvent event = await ref.once();
+    setState(() {
+      logoURL = event.snapshot.value as String;
+    });
+  }
 
   Future getData() async{
     DatabaseEvent event = await ref.once();
@@ -36,13 +67,237 @@ class _AvailableTablesState extends State<AvailableTables> {
     setState(() {
       end = true;
     });
-    print("num of tables list:");
-    print(numOfTablesList);
-    print(nameList);
   }
+
+  Future getMenu() async{
+    if (menuOnce) {
+      setState(()=> viewMenu = !viewMenu);
+      return;
+    }
+    setState(()=> menuOnce = !menuOnce);
+    DatabaseReference ref4 = FirebaseDatabase.instance.ref("$selectedRest/menuSize");
+    DatabaseEvent event = await ref4.once();
+    setState(()=> menuSize = event.snapshot.value as int);
+
+    for(int i=0; i<menuSize; i++){
+      DatabaseReference ref2 = FirebaseDatabase.instance.ref("$selectedRest/dishes/dish$i");
+      DatabaseReference ref3 = FirebaseDatabase.instance.ref("$selectedRest/prices/price$i");
+      DatabaseEvent event2 = await ref2.once();
+      DatabaseEvent event3 = await ref3.once();
+      String dish = event2.snapshot.value as String;
+      String price = event3.snapshot.value as String;
+      setState(()=> dishList.add(event2.snapshot.value as String));
+      setState(()=> priceList.add(event3.snapshot.value as String));
+      setState(() {
+        menuString = "$menuString$dish : RM$price\n";
+      });
+    }
+    setState(()=> viewMenu = !viewMenu);
+  }
+
+  Future addQueue() async{
+    setState(()=> viewQueue = !viewQueue);
+  }
+
+  Future calculateEstTime() async{
+    if (!isNumeric(nOPController.text)){
+      showToast();
+      return;
+    }
+    setState(()=> pax = int.parse(nOPController.text));
+    if (pax==0) {
+      showToast2();
+      return;
+    }
+
+    DatabaseReference ref4 = FirebaseDatabase.instance.ref("$selectedRest/totalTables");
+    DatabaseEvent event = await ref4.once();
+    setState(()=> totalTables = event.snapshot.value as int);
+    if(pax>totalTables*4) {
+      showToast3();
+      return;
+    }
+    int waitTime = 0;
+    int clearTime = 0;
+    int minTime = 100;
+    List<int> times = [10, 25, 16, 27, 5, 11, 19, 13, 11]; //testing
+    //dont delete
+    /*for(int i=1; i<=totalTables; i++){
+      DatabaseReference ref2 = FirebaseDatabase.instance.ref("$selectedRest/Table/Table $i/waitTime");
+      DatabaseReference ref3 = FirebaseDatabase.instance.ref("$selectedRest/Table/Table $i/clearTime");
+      DatabaseEvent event2 = await ref2.once();
+      DatabaseEvent event3 = await ref3.once();
+      waitTime = event2.snapshot.value as int;
+      clearTime = event3.snapshot.value as int;
+      if(clearTime!=0){
+        times.add(clearTime);
+      }else {
+        times.add(waitTime);
+      }
+    }*/
+    times.sort();
+    print(times);
+    //int noOfTablesAssigned = (pax/4).ceil();
+    setState(()=> noOfTablesAssigned = (pax/4).ceil());
+    print(noOfTablesAssigned);
+    minTime = times.elementAt(noOfTablesAssigned-1);
+    print(minTime);
+    DateTime now = DateTime.now();
+    int hour = now.hour + 8;
+    print(hour);
+    int minute = now.minute;
+    if(hour>=24) hour = hour - 24;
+    //print("$hour:${now.minute}:${now.second}");
+    minute = minute + minTime;
+    if (minute>=60) {
+      minute = minute - 60;
+      hour = hour + 1;
+    }
+    String ampm="";
+    if(hour>=0&&hour<=11) {
+      ampm = "am";
+    } else {
+      ampm = "pm";
+    }
+    if(hour==0){
+      hour = 12;
+    } else if (hour>=13&&hour<24){
+      hour = hour - 12;
+    }
+
+    if(minute<10){
+      setState(()=> estTime = "$hour:0$minute $ampm");
+    }else {
+      setState(()=> estTime = "$hour:$minute $ampm");
+    }
+    setState(()=> showTime = true);
+    print("$hour:$minute $ampm");
+  }
+
+  bool isNumeric(String s) {
+    return int.tryParse(s) != null;
+  }
+
+  void showToast() => Fluttertoast.showToast(
+    msg: "Please enter a number",
+    fontSize: 18,
+  );
+
+  void showToast2() => Fluttertoast.showToast(
+    msg: "Please enter number more than 0",
+    fontSize: 18,
+  );
+
+  void showToast3() => Fluttertoast.showToast(
+    msg: "Not enough tables! Please contact the restaurant for inquiries",
+    fontSize: 18,
+  );
+
+  Future submitQueue() async{
+    calculateEstTime();
+    DatabaseReference ref = FirebaseDatabase.instance.ref("$selectedRest/Queues/totalQueues");
+    DatabaseEvent event = await ref.once();
+    int totalQueues = event.snapshot.value as int;
+    DateTime now = DateTime.now();
+    //int hour = now.hour + 8;
+    //String queueID = "$hour${now.minute}";
+
+    DatabaseReference ref2 = FirebaseDatabase.instance.ref("$selectedRest/Queues");
+    await ref2.update({
+      "queue$totalQueues" : {
+        "queueID" : (totalQueues+1),
+        "phoneNo" : phoneNoController.text,
+        "noOfPax" : pax,
+        "noOfTablesNeeded": noOfTablesAssigned,
+        "estimatedTime": estTime
+      },
+      "totalQueues" : totalQueues+1
+    });
+    DatabaseReference ref3 = FirebaseDatabase.instance.ref("customersUids");
+    var currentUser = FirebaseAuth.instance.currentUser;
+    var uid = currentUser?.uid;
+    await ref3.update({
+      "$uid": "queue$totalQueues"
+    });
+  }
+
+  Future getQueueInfo() async{
+    var currentUser = FirebaseAuth.instance.currentUser;
+    var uid = currentUser?.uid;
+    DatabaseReference ref = FirebaseDatabase.instance.ref("customersUids/$uid");
+    DatabaseEvent event = await ref.once();
+    String queueID = event.snapshot.value as String;
+    String s = queueID[queueID.length - 1];
+    setState(()=> queueString = "${queueString}Queue ID : $s\n");
+    DatabaseReference ref2 = FirebaseDatabase.instance.ref("Queues/$queueID");
+    DatabaseEvent event2 = await ref2.once();
+
+}
 
   @override
   Widget build(BuildContext context) {
+    if (selectRest) {
+      if(logoURL=="") {
+        return const CircularProgressIndicator();
+      } else {
+        return SingleChildScrollView(
+          child: Column(
+          children: [
+            Image.network(logoURL, width: 160, height: 160,),
+            ElevatedButton(onPressed: (){getMenu();}, child: const Text("Menu")),
+            if (viewMenu) Card (
+                shadowColor: Colors.amber,
+                color: Colors.amber[700],
+                elevation: 5,
+              child: Text(menuString, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),)
+            ),
+            ElevatedButton(onPressed: (){addQueue();}, child: const Text("Queue")),
+            if (viewQueue)
+              SizedBox(
+                width: 250.0,
+                child: TextFormField(
+                  controller: nOPController,
+                  decoration: const InputDecoration(
+                    hintText: 'Enter no. of pax eg: 4, 6',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ),
+            if (viewQueue)
+              SizedBox(
+                width: 250.0,
+                child: TextFormField(
+                  controller: phoneNoController,
+                  decoration: const InputDecoration(
+                    hintText: 'Enter phone no.',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ),
+            if (viewQueue)
+            ElevatedButton(onPressed: (){calculateEstTime();},
+                style: ElevatedButton.styleFrom(
+                  primary: Colors.green,
+                ), child: const Text("Show estimated time")),
+            if (showTime)
+              Text(estTime),
+            if (viewQueue)
+              ElevatedButton(onPressed: (){submitQueue();},
+                style: ElevatedButton.styleFrom(
+                  primary: Colors.green,
+                ), child: const Text("Submit Queue"),),
+            if (showQueueInfo)
+              Card (
+                  shadowColor: Colors.amber,
+                  color: Colors.amber[700],
+                  elevation: 5,
+                  child: Text(menuString, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),)
+              ),
+          ],
+      ),
+        );
+      }
+    } else
     if (!end) {
       if(numOfRests==0) getData();
       return const CircularProgressIndicator();
@@ -54,7 +309,15 @@ class _AvailableTablesState extends State<AvailableTables> {
             return Row(
                 children: <Widget>[
                 ElevatedButton(
-                onPressed: () {  },
+                onPressed: (){
+                  setState(() {
+                    selectedRest = "rest$index";
+                  });
+                  toShowLogo();
+                    setState(() {
+                    selectRest = true;
+                  });
+                },
             style: ElevatedButton.styleFrom(fixedSize: const Size(280, 50)),
             child: Text(nameList[index]),
             ),
