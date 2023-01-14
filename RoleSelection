@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:fypseats/screens/home/homeCust.dart';
 
 import '../home/home.dart';
@@ -16,15 +17,10 @@ class RoleSelection extends StatefulWidget {
 class _RoleSelectionState extends State<RoleSelection> {
   int selectedValue = 0;
   bool isPressed = false;
-
+  bool amRM = false;
 
   void toNext() {
-    setState(() {
-      isPressed = true;
-    });
-    if (selectedValue == 2) {
-      createDoc();
-    }
+    setRole();
   }
 
   @override
@@ -36,10 +32,12 @@ class _RoleSelectionState extends State<RoleSelection> {
       return const Home();
     } else {
       return Scaffold(
+          appBar: AppBar(
+            title: const Text('SEATS'),),
       body: Center(
         child: Column(
           children: [
-            const Text('You are a ...'),
+            const Text('You are a ...', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
             RadioListTile<int>(
                 value: 1, groupValue: selectedValue,
                 title: const Text('Customer', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold), ),
@@ -122,4 +120,41 @@ class _RoleSelectionState extends State<RoleSelection> {
     }
   }
 
-}
+  Future setRole() async{
+    var currentUser = FirebaseAuth.instance.currentUser;
+    var uid = currentUser?.uid;
+    DatabaseReference ref = FirebaseDatabase.instance.ref("roles/$uid");
+    DatabaseReference ref2 = FirebaseDatabase.instance.ref("roles");
+    DatabaseEvent event = await ref.once();
+    String s = event.snapshot.value as String;
+    if(!event.snapshot.exists&&selectedValue==1){
+      await ref2.update({
+        uid.toString() : "customer",
+      });
+      setState(()=> isPressed = true);
+    }
+    else if (!event.snapshot.exists&&selectedValue==2){
+      await ref2.update({
+        uid.toString() : "manager",
+      });
+      setState(()=> isPressed = true);
+      createDoc();
+    }
+    else if (selectedValue==1&&s!="customer") {
+      showToast();
+    }
+    else if (selectedValue==2&&s!="manager"){
+      showToast();
+    } else {
+      setState(()=> isPressed = true);
+    }
+  }
+
+  void showToast() => Fluttertoast.showToast(
+    msg: "Please select again",
+    fontSize: 18,
+  );
+  }
+
+
+
