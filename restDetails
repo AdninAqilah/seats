@@ -9,6 +9,8 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:fypseats/screens/home/restDetails2.dart';
 import 'package:image_picker/image_picker.dart';
 
+import 'editMenuList.dart';
+
 class restDetails extends StatefulWidget {
   const restDetails({Key? key}) : super(key: key);
 
@@ -109,7 +111,8 @@ class _restDetailsState extends State<restDetails> {
     var docUser = user.doc(uid);
 
     if (editMenu) {
-      return const RestDetails2();
+      //return const RestDetails2();
+      return const EditMenuList();
     } else {
       return FutureBuilder<DocumentSnapshot>(
         future: docUser.get(),
@@ -430,21 +433,32 @@ class _restDetailsState extends State<restDetails> {
     var currentUser = FirebaseAuth.instance.currentUser;
     final path = 'files/${currentUser?.uid}/logo.jpg';
     final logo = File(image!.path);
+    var uid = currentUser?.uid;
 
     final ref = FirebaseStorage.instance.ref().child(path);
     await ref.putFile(logo);
-    ref.getDownloadURL().then((value){
-      //print(value);
-      /*setState((){
-        imageUrl = value;
-      });*/
+
+    DatabaseReference ref2 = FirebaseDatabase.instance.ref("uids/$uid");
+    DatabaseEvent event = await ref2.once();
+    String restID = event.snapshot.value as String; //rest2
+    DatabaseReference ref3 = FirebaseDatabase.instance.ref(restID);
+
+    ref.getDownloadURL().then((value) async {
       final docUser = FirebaseFirestore.instance.collection('restaurants').doc(
           currentUser?.uid);
       docUser.update(
           {
             'logoUrl': value,
           });
+
+      await ref3.update({
+        "logoURL": value
+      });
     });
+
+
+
+
   }
 
   Future pickImage() async {
@@ -493,26 +507,60 @@ class _restDetailsState extends State<restDetails> {
     var currentUser = FirebaseAuth.instance.currentUser;
     final docUser = FirebaseFirestore.instance.collection('restaurants').doc(
         currentUser?.uid);
-
+    var uid = currentUser?.uid;
     docUser.update(
         {
           'operatingDays': [monChecked, tueChecked, wedChecked, thuChecked,
             friChecked, satChecked, sunChecked],
         }
     );
+    List days = [monChecked, tueChecked, wedChecked, thuChecked,
+      friChecked, satChecked, sunChecked];
+    String s = "";
+    for(int i=0;i<days.length;i++){
+      if (days[i]) {
+        s = "${s}O";
+      } else {
+        s = "${s}C";
+      }
+    }
+
+    DatabaseReference ref = FirebaseDatabase.instance.ref("uids/$uid");
+    DatabaseEvent event = await ref.once();
+    String restID = event.snapshot.value as String; //rest2
+    DatabaseReference ref2 = FirebaseDatabase.instance.ref(restID);
+    await ref2.update({
+      "operatingDays": s
+    });
   }
 
   Future updateOH() async {
     var currentUser = FirebaseAuth.instance.currentUser;
     final docUser = FirebaseFirestore.instance.collection('restaurants').doc(
         currentUser?.uid);
-
+    var uid = currentUser?.uid;
     docUser.update(
         {
           'openTime': [selectedHour.toString(), selectedMinute.toString(), selectedAmpm.toString()],
           'closeTime' : [selectedHour2.toString(), selectedMinute2.toString(), selectedAmpm2.toString()],
         }
     );
+    DatabaseReference ref = FirebaseDatabase.instance.ref("uids/$uid");
+    DatabaseEvent event = await ref.once();
+    String restID = event.snapshot.value as String; //rest2
+    DatabaseReference ref2 = FirebaseDatabase.instance.ref(restID);
+    await ref2.update({
+      "openTime": {
+        "hour": selectedHour.toString(),
+        "minute": selectedMinute.toString(),
+        "ampm": selectedAmpm.toString()
+      },
+      "closeTime": {
+        "hour": selectedHour2.toString(),
+        "minute": selectedMinute2.toString(),
+        "ampm": selectedAmpm2.toString()
+      }
+    });
   }
 
   void submitOT(){
