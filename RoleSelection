@@ -155,6 +155,3 @@ class _RoleSelectionState extends State<RoleSelection> {
     fontSize: 18,
   );
   }
-
-
-
