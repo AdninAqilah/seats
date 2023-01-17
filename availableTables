@@ -47,27 +47,46 @@ class _AvailableTablesState extends State<AvailableTables> {
 
   Future getData() async{
     DatabaseEvent event = await ref.once();
-    setState(() {
-      numOfRests = event.snapshot.value as int;
-    });
-    final now = DateTime.now();
-    print(now);
-    //final fiftyDaysFromNow = today.add(const Duration(days: 50));
+    setState(()=> numOfRests = event.snapshot.value as int);
+
     for(int i=0; i<numOfRests; i++){
       DatabaseReference ref2 = FirebaseDatabase.instance.ref("rest$i/name");
       DatabaseReference ref3 = FirebaseDatabase.instance.ref("rest$i/numOfTables");
+      DatabaseReference ref4 = FirebaseDatabase.instance.ref("rest$i/operatingDays");
+      DatabaseReference ref5 = FirebaseDatabase.instance.ref("rest$i/openTime");
+      DatabaseReference ref6 = FirebaseDatabase.instance.ref("rest$i/closeTime");
       DatabaseEvent event2 = await ref2.once();
       DatabaseEvent event3 = await ref3.once();
-      setState(() {
-        nameList.add(event2.snapshot.value as String);
-      });
-      setState(() {
-        numOfTablesList.add(event3.snapshot.value as int);
-      });
+      DatabaseEvent event4 = await ref4.once();
+      DatabaseEvent event5 = await ref5.once();
+      DatabaseEvent event6 = await ref6.once();
+      String s = event4.snapshot.value as String;
+      String openTime = event5.snapshot.value as String;
+      String closeTime = event6.snapshot.value as String;
+      if (checkOpen(s, openTime, closeTime)) {
+        setState(()=> nameList.add(event2.snapshot.value as String));
+        setState(()=> numOfTablesList.add(event3.snapshot.value as int));
+      } else {
+        setState(()=> nameList.add("${event2.snapshot.value as String} (CLOSED)"));
+        setState(()=> numOfTablesList.add(0));
+      }
     }
-    setState(() {
-      end = true;
-    });
+
+    setState(()=> end = true);
+  }
+
+  bool checkOpen(String s, String openTime, String closeTime) {
+    DateTime now = DateTime.now();
+    DateTime malaysiaTime = now.add(const Duration(hours: 8));
+    int d = malaysiaTime.weekday;
+    if (s[d-1]=="C") {
+      return false; //it's closed
+    } else { //it opened that day, but out of operating hours //800AM //1130PM
+      List openTimeList = [openTime.substring(0, openTime.length - 4),openTime.substring(openTime.length - 4, openTime.length - 2), openTime.substring(openTime.length - 2)];
+      List closeTimeList = [closeTime.substring(0, closeTime.length - 4),closeTime.substring(closeTime.length - 4, closeTime.length - 2), closeTime.substring(closeTime.length - 2)];
+      if (openTimeList[2]=="PM"&&openTimeList[0]!="12") print("");
+    }
+    return true;
   }
 
   Future getMenu() async{
@@ -133,7 +152,7 @@ class _AvailableTablesState extends State<AvailableTables> {
       if(clearTime!=0){
         times.add(clearTime);
       }else {
-        times.add(waitTime);
+        times.add(waitTime + 5);
       }
     }*/
     times.sort();
