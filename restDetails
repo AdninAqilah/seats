@@ -144,13 +144,14 @@ class _restDetailsState extends State<restDetails> {
             selectedAmpm2 = data['closeTime'][2];
             imageUrl = data['logoUrl'];
 
+            opDays = '';
             if(monChecked) opDays = 'Mon,';
-            if(tueChecked) opDays = '$opDays Tue,';
-            if(wedChecked) opDays = '$opDays Wed,';
-            if(thuChecked) opDays = '$opDays Thu,';
-            if(friChecked) opDays = '$opDays Fri,';
-            if(satChecked) opDays = '$opDays Sat,';
-            if(sunChecked) opDays = '$opDays Sun,';
+            if(tueChecked) opDays = '${opDays}Tue,';
+            if(wedChecked) opDays = '${opDays}Wed,';
+            if(thuChecked) opDays = '${opDays}Thu,';
+            if(friChecked) opDays = '${opDays}Fri,';
+            if(satChecked) opDays = '${opDays}Sat,';
+            if(sunChecked) opDays = '${opDays}Sun,';
             opHrs = selectedHour.toString() + ":" + selectedMinute.toString() + selectedAmpm.toString() + ' to ' + selectedHour2.toString() + ":" + selectedMinute2.toString() + selectedAmpm2.toString();
 
             return Container(
@@ -549,17 +550,16 @@ class _restDetailsState extends State<restDetails> {
     DatabaseEvent event = await ref.once();
     String restID = event.snapshot.value as String; //rest2
     DatabaseReference ref2 = FirebaseDatabase.instance.ref(restID);
-    await ref2.update({
-      "openTime": {
-        "hour": selectedHour.toString(),
-        "minute": selectedMinute.toString(),
-        "ampm": selectedAmpm.toString()
-      },
-      "closeTime": {
-        "hour": selectedHour2.toString(),
-        "minute": selectedMinute2.toString(),
-        "ampm": selectedAmpm2.toString()
-      }
+    await ref2.update({ //
+      "openTime":
+        selectedHour.toString() +
+        selectedMinute.toString() +
+        selectedAmpm.toString()
+      ,
+      "closeTime":
+        selectedHour2.toString() +
+        selectedMinute2.toString() +
+        selectedAmpm2.toString()
     });
   }
 
