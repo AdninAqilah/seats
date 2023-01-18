@@ -23,7 +23,12 @@ class AnnouncementsCustomer extends StatelessWidget {
             Map<String, dynamic> data = snapshot.data!.data() as Map<String,
                 dynamic>;
             int arrLength = data['annID'].length;
-//
+            DateTime now = DateTime.now();
+            var n = data['EuxO4QyR2ZSl3RqyuB6jbb0FhUv1139098'][2];
+            print(n);
+            var date = DateTime.fromMillisecondsSinceEpoch(n * 1000);
+            print(date);
+
             return ListView.builder(
                 itemCount: arrLength,
                 itemBuilder: (context, index){
