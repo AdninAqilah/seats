@@ -79,14 +79,46 @@ class _AvailableTablesState extends State<AvailableTables> {
     DateTime now = DateTime.now();
     DateTime malaysiaTime = now.add(const Duration(hours: 8));
     int d = malaysiaTime.weekday;
+    int openHour = 0;
+    int closeHour = 0;
+    int currentHour = malaysiaTime.hour;
+    int openMinute = 0;
+    int closeMinute = 0;
+    int currentMinute = malaysiaTime.minute;
     if (s[d-1]=="C") {
       return false; //it's closed
     } else { //it opened that day, but out of operating hours //800AM //1130PM
       List openTimeList = [openTime.substring(0, openTime.length - 4),openTime.substring(openTime.length - 4, openTime.length - 2), openTime.substring(openTime.length - 2)];
       List closeTimeList = [closeTime.substring(0, closeTime.length - 4),closeTime.substring(closeTime.length - 4, closeTime.length - 2), closeTime.substring(closeTime.length - 2)];
-      if (openTimeList[2]=="PM"&&openTimeList[0]!="12") print("");
+
+      //convert open time to 24 hours
+      if (openTimeList[2]=="PM"&&openTimeList[0]!="12") {
+        openHour = int.parse(openTimeList[0]) + 12;
+      } else if (openTimeList[2]=="AM"&&openTimeList[0]=="12"){
+        openHour = 24;
+      } else {
+        openHour = int.parse(openTimeList[0]);
+      }
+
+      //convert close time to 24 hours
+      if (closeTimeList[2]=="PM"&&closeTimeList[0]!="12") {
+        closeHour = int.parse(closeTimeList[0]) + 12;
+      } else if (closeTimeList[2]=="AM"&&closeTimeList[0]=="12"){
+        closeHour = 24;
+      } else {
+        closeHour = int.parse(closeTimeList[0]);
+      }
+
+      openMinute = int.parse(openTimeList[1]);
+      closeMinute = int.parse(closeTimeList[1]);
+
+      double currentTime = currentHour + currentMinute/60;
+      double openTimeDouble = openHour + openMinute/60;
+      double closeTimeDouble = closeHour + closeMinute/60;
+
+      if (currentTime<openTimeDouble||currentTime>=closeTimeDouble) return false;
     }
-    return true;
+    return true; //it is opened
   }
 
   Future getMenu() async{
@@ -156,15 +188,11 @@ class _AvailableTablesState extends State<AvailableTables> {
       }
     }*/
     times.sort();
-    print(times);
     //int noOfTablesAssigned = (pax/4).ceil();
     setState(()=> noOfTablesAssigned = (pax/4).ceil());
-    print(noOfTablesAssigned);
     minTime = times.elementAt(noOfTablesAssigned-1);
-    print(minTime);
     DateTime now = DateTime.now();
     int hour = now.hour + 8;
-    print(hour);
     int minute = now.minute;
     if(hour>=24) hour = hour - 24;
     //print("$hour:${now.minute}:${now.second}");
