@@ -15,11 +15,11 @@ class Guide extends StatelessWidget {
             textScaleFactor: 1.2,
             text: const TextSpan(
               text: "To view tables availability\n",
-              style: TextStyle(fontWeight: FontWeight.bold),
+              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
               children: <TextSpan>[
                 TextSpan(
                   text: "-Tap on \"available tables\"\n"
-                      "-Tap on \"map\" to view nearby restaurants on a map or"
+                      "-Tap on \"map\" to view nearby restaurants on a map or "
                       "tap on \"list\" to view in a long list\n"
                       "-Each restaurant is shown with the number of tables\n"
                       "available for the restaurant\n\n",
@@ -52,7 +52,7 @@ class Guide extends StatelessWidget {
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
                 TextSpan(
-                    text: "-Tap \"announcements\" to view latest announcements"
+                    text: "-Tap \"announcements\" to view latest announcements "
                         "from nearby restaurants"
                 )
               ]
@@ -78,11 +78,12 @@ class GuideManager extends StatelessWidget {
           textScaleFactor: 1.2,
           text: const TextSpan(
             text: 'To update details of restaurant\n',
-            style: TextStyle(fontWeight: FontWeight.bold),
+            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
             children: <TextSpan>[
               TextSpan(text:
               '- Tap on \'Details\' at the bottom bar\n'
               '- You may add or edit the information of restaurants by tapping on the edit button for any detail\n'
+              '- It is advisable to set the close time earlier than actual to avoid customers submitting queue near the closing time\n'
               '- Tap on \'Upload Image\' button to upload logo of the restaurant\n'
               '- Tap on \'Edit Menu\' to go to the edit menu page\n\n'),
               TextSpan(text:
