@@ -1,3 +1,5 @@
+import 'dart:collection';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
@@ -36,6 +38,7 @@ class _AvailableTablesState extends State<AvailableTables> {
   bool showQueueInfo = false;
   String queueString = "";
   bool queueOnce = false;
+  Map status = {};
 
   Future<void> toShowLogo() async {
     DatabaseReference ref = FirebaseDatabase.instance.ref("$selectedRest/logoURL");
@@ -64,14 +67,15 @@ class _AvailableTablesState extends State<AvailableTables> {
       String openTime = event5.snapshot.value as String;
       String closeTime = event6.snapshot.value as String;
       if (checkOpen(s, openTime, closeTime)) {
+        setState(()=> status['rest$i'] = 'O');
         setState(()=> nameList.add(event2.snapshot.value as String));
         setState(()=> numOfTablesList.add(event3.snapshot.value as int));
       } else {
+        setState(()=> status['rest$i'] = 'C');
         setState(()=> nameList.add("${event2.snapshot.value as String} (CLOSED)"));
         setState(()=> numOfTablesList.add(0));
       }
     }
-
     setState(()=> end = true);
   }
 
@@ -95,7 +99,7 @@ class _AvailableTablesState extends State<AvailableTables> {
       if (openTimeList[2]=="PM"&&openTimeList[0]!="12") {
         openHour = int.parse(openTimeList[0]) + 12;
       } else if (openTimeList[2]=="AM"&&openTimeList[0]=="12"){
-        openHour = 24;
+        openHour = 0;
       } else {
         openHour = int.parse(openTimeList[0]);
       }
@@ -104,7 +108,7 @@ class _AvailableTablesState extends State<AvailableTables> {
       if (closeTimeList[2]=="PM"&&closeTimeList[0]!="12") {
         closeHour = int.parse(closeTimeList[0]) + 12;
       } else if (closeTimeList[2]=="AM"&&closeTimeList[0]=="12"){
-        closeHour = 24;
+        closeHour = 0;
       } else {
         closeHour = int.parse(closeTimeList[0]);
       }
@@ -116,7 +120,9 @@ class _AvailableTablesState extends State<AvailableTables> {
       double openTimeDouble = openHour + openMinute/60;
       double closeTimeDouble = closeHour + closeMinute/60;
 
-      if (currentTime<openTimeDouble||currentTime>=closeTimeDouble) return false;
+      if (currentTime<openTimeDouble||currentTime>=closeTimeDouble){
+        return false;
+      }
     }
     return true; //it is opened
   }
@@ -188,7 +194,7 @@ class _AvailableTablesState extends State<AvailableTables> {
       }
     }*/
     times.sort();
-    //int noOfTablesAssigned = (pax/4).ceil();
+    print(times);
     setState(()=> noOfTablesAssigned = (pax/4).ceil());
     minTime = times.elementAt(noOfTablesAssigned-1);
     DateTime now = DateTime.now();
@@ -219,7 +225,7 @@ class _AvailableTablesState extends State<AvailableTables> {
       setState(()=> estTime = "$hour:$minute $ampm");
     }
     setState(()=> showTime = true);
-    print("$hour:$minute $ampm");
+    //print("$hour:$minute $ampm");
   }
 
   bool isNumeric(String s) {
@@ -262,7 +268,9 @@ class _AvailableTablesState extends State<AvailableTables> {
     var currentUser = FirebaseAuth.instance.currentUser;
     var uid = currentUser?.uid;
     await ref3.update({
-      "$uid": "queue$totalQueues"
+      "$uid": {
+        selectedRest: "queue$totalQueues",
+      }
     });
     getQueueInfo();
   }
@@ -271,15 +279,15 @@ class _AvailableTablesState extends State<AvailableTables> {
     if (queueOnce) return;
     var currentUser = FirebaseAuth.instance.currentUser;
     var uid = currentUser?.uid;
-    DatabaseReference ref = FirebaseDatabase.instance.ref("customersUids/$uid");
+    DatabaseReference ref = FirebaseDatabase.instance.ref("customersUids/$uid/$selectedRest");
     DatabaseEvent event = await ref.once();
-    if(!event.snapshot.exists) return;
+    if(!event.snapshot.exists) return; //takde restaurant tu
+
     String queueID = event.snapshot.value as String;
     if(queueID=="") return;
     setState(()=> viewQueue = false);
     String s = (int.parse(queueID[queueID.length - 1]) + 1).toString();
     setState(()=> queueString = "${queueString}Queue ID : $s\n");
-    print(queueID);
 
     DatabaseReference ref2 = FirebaseDatabase.instance.ref("$selectedRest/Queues/$queueID/phoneNo");
     DatabaseEvent event2 = await ref2.once();
@@ -316,6 +324,7 @@ class _AvailableTablesState extends State<AvailableTables> {
                 elevation: 5,
               child: Text(menuString, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),)
             ),
+            if(status[selectedRest]=='O')
             ElevatedButton(onPressed: (){getQueueInfo(); addQueue();}, child: const Text("Queue")),
             if (viewQueue&&queueString=="")
               SizedBox(
@@ -358,6 +367,10 @@ class _AvailableTablesState extends State<AvailableTables> {
                   elevation: 5,
                   child: Text(queueString, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),)
               ),
+            ElevatedButton(onPressed: (){setState(()=> selectRest = false);},
+              style: ElevatedButton.styleFrom(
+                primary: Colors.blue,
+              ), child: const Text("Back"),),
           ],
       ),
         );
