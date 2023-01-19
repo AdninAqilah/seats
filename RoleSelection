@@ -110,6 +110,12 @@ class _RoleSelectionState extends State<RoleSelection> {
       "rest$numOfRests": {
         "name": "unavailable",
         "numOfTables": 0,
+        "Queues": {
+          "totalQueues": 0
+        },
+        "dishes": "",
+        "prices": "",
+        "menuSize": 0
       },
       "numOfRests": newNum,
     });
