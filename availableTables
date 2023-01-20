@@ -178,7 +178,7 @@ class _AvailableTablesState extends State<AvailableTables> {
     int waitTime = 0;
     int clearTime = 0;
     int minTime = 100;
-    List<int> times = [10, 25, 16, 27, 5, 11, 19, 13, 11]; //testing
+    List<int> times = [10, 25, 16, 27, 5, 12, 19, 13, 11]; //testing
     //dont delete
     /*for(int i=1; i<=totalTables; i++){
       DatabaseReference ref2 = FirebaseDatabase.instance.ref("$selectedRest/Table/Table $i/waitTime");
@@ -195,8 +195,29 @@ class _AvailableTablesState extends State<AvailableTables> {
     }*/
     times.sort();
     print(times);
+
+    DatabaseReference ref5 = FirebaseDatabase.instance.ref("$selectedRest/Queues/totalQueues");
+    DatabaseEvent event5 = await ref5.once();
+    int totalQueues = event5.snapshot.value as int;
+    int totalTablesReserved = 0;
+
+    for(int j=totalQueues-1;j>=0;j--){
+      DatabaseReference ref4 = FirebaseDatabase.instance.ref("$selectedRest/Queues/queue$j/noOfTablesNeeded");
+      DatabaseEvent event4 = await ref4.once();
+      if(!event4.snapshot.exists) continue;
+      totalTablesReserved = totalTablesReserved + (event4.snapshot.value as int);
+    }
+
+
+
     setState(()=> noOfTablesAssigned = (pax/4).ceil());
-    minTime = times.elementAt(noOfTablesAssigned-1);
+    try {
+      minTime = times.elementAt(noOfTablesAssigned-1+totalTablesReserved);
+    } catch (e) {
+
+    }
+
+    print(minTime);
     DateTime now = DateTime.now();
     int hour = now.hour + 8;
     int minute = now.minute;
