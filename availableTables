@@ -214,7 +214,7 @@ class _AvailableTablesState extends State<AvailableTables> {
     try {
       minTime = times.elementAt(noOfTablesAssigned-1+totalTablesReserved);
     } catch (e) {
-
+      if(noOfTablesAssigned==1) minTime = times.elementAt(0) + 55;
     }
 
     print(minTime);
