@@ -178,7 +178,7 @@ class _AvailableTablesState extends State<AvailableTables> {
     int waitTime = 0;
     int clearTime = 0;
     int minTime = 100;
-    List<int> times = [10, 25, 16, 27, 5, 12, 19, 13, 11]; //testing
+    List<int> times = [8, 21, 36, 35, 9, 45, 30, 10, 50]; //testing
     //dont delete
     /*for(int i=1; i<=totalTables; i++){
       DatabaseReference ref2 = FirebaseDatabase.instance.ref("$selectedRest/Table/Table $i/waitTime");
@@ -208,25 +208,22 @@ class _AvailableTablesState extends State<AvailableTables> {
       totalTablesReserved = totalTablesReserved + (event4.snapshot.value as int);
     }
 
-
-
     setState(()=> noOfTablesAssigned = (pax/4).ceil());
     try {
       minTime = times.elementAt(noOfTablesAssigned-1+totalTablesReserved);
     } catch (e) {
-      if(noOfTablesAssigned==1) minTime = times.elementAt(0) + 55;
+      int i = noOfTablesAssigned - (times.length - totalTablesReserved);
+      minTime = times.elementAt(i- 1) + 55*(i/times.length).ceil();
     }
 
-    print(minTime);
     DateTime now = DateTime.now();
     int hour = now.hour + 8;
     int minute = now.minute;
     if(hour>=24) hour = hour - 24;
-    //print("$hour:${now.minute}:${now.second}");
     minute = minute + minTime;
     if (minute>=60) {
-      minute = minute - 60;
-      hour = hour + 1;
+      hour = hour + (minute/60).floor();
+      minute = minute - 60*(minute/60).floor();
     }
     String ampm="";
     if(hour>=0&&hour<=11) {
@@ -265,6 +262,11 @@ class _AvailableTablesState extends State<AvailableTables> {
 
   void showToast3() => Fluttertoast.showToast(
     msg: "Not enough tables! Please contact the restaurant for inquiries",
+    fontSize: 18,
+  );
+
+  void showToast4() => Fluttertoast.showToast(
+    msg: "Queue is successfully cancelled",
     fontSize: 18,
   );
 
@@ -328,6 +330,105 @@ class _AvailableTablesState extends State<AvailableTables> {
     setState(()=> queueOnce = true);
 }
 
+  Future cancelQueue() async{
+    var currentUser = FirebaseAuth.instance.currentUser;
+    var uid = currentUser?.uid;
+    DatabaseReference ref = FirebaseDatabase.instance.ref("customersUids/$uid/$selectedRest");
+    DatabaseEvent event = await ref.once();
+    String queueID = event.snapshot.value as String;
+    DatabaseReference ref2 = FirebaseDatabase.instance.ref("$selectedRest/Queues/$queueID");
+    await ref2.update({
+      'estimatedTime': "",
+      'noOfPax': 0,
+      'noOfTablesNeeded': 0,
+      'phoneNo': "",
+      'queueID': ""
+    });
+    DatabaseReference ref3 = FirebaseDatabase.instance.ref("customersUids/$uid");
+    await ref3.update({
+      selectedRest: ""
+    }
+    );
+    showToast4();
+    setState(()=> showQueueInfo = false);
+    setState(()=> viewQueue = true);
+    setState(()=> queueString = "");
+    recalculateTime();
+  }
+
+  Future recalculateTime() async{
+    DatabaseReference ref = FirebaseDatabase.instance.ref("$selectedRest/Queues/totalQueues");
+    DatabaseEvent event = await ref.once();
+    int totalQueues = event.snapshot.value as int;
+
+    int waitTime = 0;
+    int clearTime = 0;
+    int minTime = 100;
+    List<int> times = [8, 21, 36, 35, 9, 45, 30, 10, 50]; //testing
+    //dont delete
+    /*for(int i=1; i<=totalTables; i++){
+      DatabaseReference ref2 = FirebaseDatabase.instance.ref("$selectedRest/Table/Table $i/waitTime");
+      DatabaseReference ref3 = FirebaseDatabase.instance.ref("$selectedRest/Table/Table $i/clearTime");
+      DatabaseEvent event2 = await ref2.once();
+      DatabaseEvent event3 = await ref3.once();
+      waitTime = event2.snapshot.value as int;
+      clearTime = event3.snapshot.value as int;
+      if(clearTime!=0){
+        times.add(clearTime);
+      }else {
+        times.add(waitTime + 5);
+      }
+    }*/
+    times.sort();
+    print(times);
+    int totalTablesAssigned = 0;
+    for(int i=0; i<totalQueues;i++){
+      DatabaseReference ref2 = FirebaseDatabase.instance.ref("$selectedRest/Queues/queue$i/noOfTablesNeeded");
+      DatabaseEvent event2 = await ref2.once();
+      int noOfTablesAssigned = event2.snapshot.value as int; //2
+      if(noOfTablesAssigned==0) continue;
+      try {
+        minTime = times.elementAt(noOfTablesAssigned-1+totalTablesAssigned);
+      } catch (e) {
+        int i = noOfTablesAssigned - (times.length - totalTablesAssigned);
+        minTime = times.elementAt(i- 1) + 55*(i/times.length).ceil();
+      }
+
+      DateTime now = DateTime.now();
+      int hour = now.hour + 8;
+      int minute = now.minute;
+      if(hour>=24) hour = hour - 24;
+      minute = minute + minTime;
+      if (minute>=60) {
+        hour = hour + (minute/60).floor();
+        minute = minute - 60*(minute/60).floor();
+      }
+      String ampm="";
+      if(hour>=0&&hour<=11) {
+        ampm = "am";
+      } else {
+        ampm = "pm";
+      }
+
+      if(hour==0){
+        hour = 12;
+      } else if (hour>=13&&hour<24){
+        hour = hour - 12;
+      }
+      DatabaseReference ref3 = FirebaseDatabase.instance.ref("$selectedRest/Queues/queue$i");
+      if(minute<10){
+        await ref3.update({
+          'estimatedTime': "$hour:0$minute $ampm"
+        });
+      }else {
+        await ref3.update({
+          'estimatedTime': "$hour:$minute $ampm"
+        });
+      }
+      totalTablesAssigned = totalTablesAssigned + noOfTablesAssigned;
+    } //end of for loop
+  }
+
   @override
   Widget build(BuildContext context) {
     if (selectRest) {
@@ -388,6 +489,11 @@ class _AvailableTablesState extends State<AvailableTables> {
                   elevation: 5,
                   child: Text(queueString, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),)
               ),
+            if (showQueueInfo)
+              ElevatedButton(onPressed: (){cancelQueue();},
+                style: ElevatedButton.styleFrom(
+                  primary: Colors.green,
+                ), child: const Text("Cancel queue"),),
             ElevatedButton(onPressed: (){setState(()=> selectRest = false);},
               style: ElevatedButton.styleFrom(
                 primary: Colors.blue,
