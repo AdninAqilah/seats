@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:fypseats/screens/home/restDetails2.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 
 import 'editMenuList.dart';
@@ -109,6 +110,7 @@ class _restDetailsState extends State<restDetails> {
     CollectionReference user = FirebaseFirestore.instance.collection(
         'restaurants');
     var docUser = user.doc(uid);
+    String locationMessage = "Current location of the user";
 
     if (editMenu) {
       //return const RestDetails2();
@@ -403,6 +405,11 @@ class _restDetailsState extends State<restDetails> {
                                 icon: const Icon(Icons.check))
                           ],
                         ),
+                        Text(locationMessage, textAlign: TextAlign.center),
+                        ElevatedButton(onPressed: (){getCurrentLocation();},
+                          style: ElevatedButton.styleFrom(
+                            primary: Colors.blue,
+                          ), child: const Text("Get current location"),),
                         SizedBox(
                           width: double.infinity,
                           child: Text(
@@ -428,6 +435,27 @@ class _restDetailsState extends State<restDetails> {
           return Text("loading");
         });
     }
+  }
+
+  Future<Position> getCurrentLocation() async{
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if(!serviceEnabled){
+      print('Location service is disabled');
+      return Future.error('Location service is disabled');
+    }
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        return Future.error('Location permission is denied');
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever){
+      return Future.error('Location permission is permanently denied');
+    }
+
+    return await Geolocator.getCurrentPosition();
   }
 
   Future uploadLogo() async {
@@ -456,9 +484,6 @@ class _restDetailsState extends State<restDetails> {
         "logoURL": value
       });
     });
-
-
-
 
   }
 
