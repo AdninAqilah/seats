@@ -1,9 +1,11 @@
 import 'dart:collection';
+import 'dart:math';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:geolocator/geolocator.dart';
 
 class AvailableTables extends StatefulWidget {
   const AvailableTables({Key? key}) : super(key: key);
@@ -19,6 +21,7 @@ class _AvailableTablesState extends State<AvailableTables> {
   List<int> numOfTablesList = [];
   List<String> dishList = [];
   List<String> priceList = [];
+  List<String> locations = [];
   bool end = false;
   bool selectRest = false;
   bool viewMenu = false;
@@ -58,14 +61,18 @@ class _AvailableTablesState extends State<AvailableTables> {
       DatabaseReference ref4 = FirebaseDatabase.instance.ref("rest$i/operatingDays");
       DatabaseReference ref5 = FirebaseDatabase.instance.ref("rest$i/openTime");
       DatabaseReference ref6 = FirebaseDatabase.instance.ref("rest$i/closeTime");
+      DatabaseReference ref7 = FirebaseDatabase.instance.ref("rest$i/location");
       DatabaseEvent event2 = await ref2.once();
       DatabaseEvent event3 = await ref3.once();
       DatabaseEvent event4 = await ref4.once();
       DatabaseEvent event5 = await ref5.once();
       DatabaseEvent event6 = await ref6.once();
+      DatabaseEvent event7 = await ref7.once();
       String s = event4.snapshot.value as String;
       String openTime = event5.snapshot.value as String;
       String closeTime = event6.snapshot.value as String;
+      String location = event7.snapshot.value as String;
+      isNearby(location);
       if (checkOpen(s, openTime, closeTime)) {
         setState(()=> status['rest$i'] = 'O');
         setState(()=> nameList.add(event2.snapshot.value as String));
@@ -77,6 +84,49 @@ class _AvailableTablesState extends State<AvailableTables> {
       }
     }
     setState(()=> end = true);
+  }
+
+  void isNearby(String s){
+    double latC = 0;
+    double longC = 0;
+    getCurrentLocation().then((value) {
+      String C = '${value.latitude}';
+      print('C: $C');
+      latC = double.parse(C);
+      String D = '${value.longitude}';
+      longC = double.parse(D);
+    });
+    print('Customers: $latC, $longC');
+    print(s);
+    s = s.substring(10);
+    double latR = double.parse(s.split(', longitude: ')[0]);
+    double longR = double.parse(s.split(', longitude: ')[1]);
+    var p = 0.017453292519943295;
+    var a = 0.5 - cos((latR - latC) * p)/2 +
+        cos(latC * p) * cos(latR * p) *
+            (1 - cos((longR - longC) * p))/2;
+    print(12742 * asin(sqrt(a)));
+  }
+
+  Future<Position> getCurrentLocation() async{
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if(!serviceEnabled){
+      print('Location service is disabled');
+      return Future.error('Location service is disabled');
+    }
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        return Future.error('Location permission is denied');
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever){
+      return Future.error('Location permission is permanently denied');
+    }
+
+    return await Geolocator.getCurrentPosition();
   }
 
   bool checkOpen(String s, String openTime, String closeTime) {
