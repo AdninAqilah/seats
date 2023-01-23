@@ -80,7 +80,8 @@ class _RoleSelectionState extends State<RoleSelection> {
       'operatingDays': [false, false, false, false, false, false, false],
       'openTime': ['1','00', 'AM'],
       'closeTime': ['1','00', 'AM'],
-      'logoUrl': ' ',
+      'logoUrl': '',
+      'location': 'no location entered',
       'dishNames': [],
       'dishPrices':[],
       'annNum':[],
@@ -115,7 +116,8 @@ class _RoleSelectionState extends State<RoleSelection> {
         },
         "dishes": "",
         "prices": "",
-        "menuSize": 0
+        "menuSize": 0,
+        "location": "",
       },
       "numOfRests": newNum,
     });
