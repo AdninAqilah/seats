@@ -34,6 +34,7 @@ class _restDetailsState extends State<restDetails> {
   String? selectedAmpm = 'AM';
   String? selectedAmpm2 = 'AM';
   String name = '';
+  String location = '';
   String opDays = '';
   bool editName = false;
   bool editOD = false;
@@ -59,6 +60,8 @@ class _restDetailsState extends State<restDetails> {
   File? image;
   String imageUrl = ' ';
   bool editMenu = false;
+
+  String locationMessage = "Current location of the user";
 
   void toEditMenu() {
     setState(() {
@@ -110,7 +113,8 @@ class _restDetailsState extends State<restDetails> {
     CollectionReference user = FirebaseFirestore.instance.collection(
         'restaurants');
     var docUser = user.doc(uid);
-    String locationMessage = "Current location of the user";
+    late String lat;
+    late String long;
 
     if (editMenu) {
       //return const RestDetails2();
@@ -131,6 +135,7 @@ class _restDetailsState extends State<restDetails> {
             Map<String, dynamic> data = snapshot.data!.data() as Map<String,
                 dynamic>;
             name = data['name'];
+            location = data['location'];
             monChecked = data['operatingDays'][0];
             tueChecked = data['operatingDays'][1];
             wedChecked = data['operatingDays'][2];
@@ -188,7 +193,7 @@ class _restDetailsState extends State<restDetails> {
                               Expanded(
                                 child: TextFormField(
                                   controller: nameController,
-                                  decoration: InputDecoration(
+                                  decoration: const InputDecoration(
                                     border: OutlineInputBorder(),
                                   ),
                                 ),
@@ -405,8 +410,35 @@ class _restDetailsState extends State<restDetails> {
                                 icon: const Icon(Icons.check))
                           ],
                         ),
-                        Text(locationMessage, textAlign: TextAlign.center),
-                        ElevatedButton(onPressed: (){getCurrentLocation();},
+                        SizedBox(
+                          width: double.infinity,
+                          child: Text(
+                            'Location',
+                            textAlign: TextAlign.left,
+                            style: TextStyle(
+                                fontSize: 18, color: Colors.lightGreen[900]),
+                          ),
+                        ),
+                        Row(
+                          children: <Widget>[
+                            Text(location,
+                              textAlign: TextAlign.left,
+                              style: TextStyle(fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.blueAccent[900]),
+                            ),
+                          ],
+                        ),
+                        ElevatedButton(onPressed: (){
+                          getCurrentLocation().then((value) {
+                            lat = '${value.latitude}';
+                            long = '${value.longitude}';
+                            print(lat);
+                            print(long);
+                            setState(()=> locationMessage = 'latitude: $lat, \nlongitude: $long');
+                            updateLocation();
+                          });
+                          },
                           style: ElevatedButton.styleFrom(
                             primary: Colors.blue,
                           ), child: const Text("Get current location"),),
@@ -498,6 +530,27 @@ class _restDetailsState extends State<restDetails> {
     } on PlatformException catch (e) {
       print("Failed to pick image: $e");
     }
+  }
+
+  Future updateLocation() async {
+    var currentUser = FirebaseAuth.instance.currentUser;
+    final docUser = FirebaseFirestore.instance.collection('restaurants').doc(
+        currentUser?.uid);
+    var uid = currentUser?.uid;
+
+    docUser.update(
+        {
+          'location': locationMessage,
+        }
+    );
+
+    DatabaseReference ref = FirebaseDatabase.instance.ref("uids/$uid");
+    DatabaseEvent event = await ref.once();
+    String restID = event.snapshot.value as String; //rest2
+    DatabaseReference ref2 = FirebaseDatabase.instance.ref(restID);
+    await ref2.update({
+      "location": locationMessage
+    });
   }
 
   Future updateName() async {
