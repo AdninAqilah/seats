@@ -42,6 +42,7 @@ class _AvailableTablesState extends State<AvailableTables> {
   String queueString = "";
   bool queueOnce = false;
   Map status = {};
+  double distance = 0;
 
   Future<void> toShowLogo() async {
     DatabaseReference ref = FirebaseDatabase.instance.ref("$selectedRest/logoURL");
@@ -72,8 +73,13 @@ class _AvailableTablesState extends State<AvailableTables> {
       String openTime = event5.snapshot.value as String;
       String closeTime = event6.snapshot.value as String;
       String location = event7.snapshot.value as String;
-      isNearby(location);
-      if (checkOpen(s, openTime, closeTime)) {
+      await isNearby(location);
+      if (distance>=15){
+        setState(()=> status['rest$i'] = '');
+        setState(()=> nameList.add(''));
+        setState(()=> numOfTablesList.add(0));
+      }
+      else if (checkOpen(s, openTime, closeTime)) {
         setState(()=> status['rest$i'] = 'O');
         setState(()=> nameList.add(event2.snapshot.value as String));
         setState(()=> numOfTablesList.add(event3.snapshot.value as int));
@@ -86,13 +92,14 @@ class _AvailableTablesState extends State<AvailableTables> {
     setState(()=> end = true);
   }
 
-  void isNearby(String s){
+  Future isNearby(String s) async {
     double latC = 0;
     double longC = 0;
-    getCurrentLocation().then((value) {
+    await getCurrentLocation().then((value) {
       String C = '${value.latitude}';
       print('C: $C');
       latC = double.parse(C);
+      print('latC: $latC');
       String D = '${value.longitude}';
       longC = double.parse(D);
     });
@@ -105,7 +112,8 @@ class _AvailableTablesState extends State<AvailableTables> {
     var a = 0.5 - cos((latR - latC) * p)/2 +
         cos(latC * p) * cos(latR * p) *
             (1 - cos((longR - longC) * p))/2;
-    print(12742 * asin(sqrt(a)));
+    var d = (12742 * asin(sqrt(a)));
+    setState(()=> distance = d);
   }
 
   Future<Position> getCurrentLocation() async{
@@ -563,6 +571,7 @@ class _AvailableTablesState extends State<AvailableTables> {
           itemBuilder: (context, index){
             return Row(
                 children: <Widget>[
+                  if(nameList[index]!="")
                 ElevatedButton(
                 onPressed: (){
                   setState(() {
@@ -576,9 +585,10 @@ class _AvailableTablesState extends State<AvailableTables> {
             style: ElevatedButton.styleFrom(fixedSize: const Size(280, 50)),
             child: Text(nameList[index]),
             ),
+                  if(nameList[index]!="")
             Text(numOfTablesList[index].toString()),
+                  if(nameList[index]!="")
             const Icon(Icons.table_bar),
-
             ]
             );
           }
