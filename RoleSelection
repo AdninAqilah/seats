@@ -114,6 +114,9 @@ class _RoleSelectionState extends State<RoleSelection> {
         "Queues": {
           "totalQueues": 0
         },
+        "reviews": {
+          "totalReviews": 0
+        },
         "dishes": "",
         "prices": "",
         "menuSize": 0,
@@ -163,3 +166,6 @@ class _RoleSelectionState extends State<RoleSelection> {
     fontSize: 18,
   );
   }
+
+
+
