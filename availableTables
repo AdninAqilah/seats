@@ -13,6 +13,8 @@ class AvailableTables extends StatefulWidget {
   State<AvailableTables> createState() => _AvailableTablesState();
 }
 
+
+
 class _AvailableTablesState extends State<AvailableTables> {
   DatabaseReference ref = FirebaseDatabase.instance.ref("numOfRests");
   int numOfRests = 0;
@@ -45,6 +47,10 @@ class _AvailableTablesState extends State<AvailableTables> {
   double distance = 0;
   String restaurantName = "";
   bool tapReview = false;
+  int totalReviews = 0;
+  bool endReview = false;
+  List<String> reviewList = [];
+  bool fetchReviews = false;
 
   Future<void> toShowLogo() async {
     DatabaseReference ref = FirebaseDatabase.instance.ref("$selectedRest/logoURL");
@@ -234,9 +240,9 @@ class _AvailableTablesState extends State<AvailableTables> {
     int waitTime = 0;
     int clearTime = 0;
     int minTime = 100;
-    List<int> times = [8, 21, 36, 35, 9, 45, 30, 10, 50]; //testing
+    List<int> times = []; //testing
     //dont delete
-    /*for(int i=1; i<=totalTables; i++){
+    for(int i=1; i<=totalTables; i++){
       DatabaseReference ref2 = FirebaseDatabase.instance.ref("$selectedRest/Table/Table $i/waitTime");
       DatabaseReference ref3 = FirebaseDatabase.instance.ref("$selectedRest/Table/Table $i/clearTime");
       DatabaseEvent event2 = await ref2.once();
@@ -245,10 +251,12 @@ class _AvailableTablesState extends State<AvailableTables> {
       clearTime = event3.snapshot.value as int;
       if(clearTime!=0){
         times.add(clearTime);
-      }else {
+      }else if(waitTime!=0){
         times.add(waitTime + 5);
+      }else {
+        times.add(waitTime);
       }
-    }*/
+    }
     times.sort();
     print(times);
 
@@ -366,13 +374,17 @@ class _AvailableTablesState extends State<AvailableTables> {
     String queueID = event.snapshot.value as String;
     if(queueID=="") return;
     setState(()=> viewQueue = false);
-    String s = (int.parse(queueID[queueID.length - 1]) + 1).toString();
-    setState(()=> queueString = "${queueString}Queue ID : $s\n");
 
     DatabaseReference ref2 = FirebaseDatabase.instance.ref("$selectedRest/Queues/$queueID/phoneNo");
     DatabaseEvent event2 = await ref2.once();
-    s = event2.snapshot.value as String;
-    setState(()=> queueString = "${queueString}Phone No : $s\n");
+    String s2 = event2.snapshot.value as String;
+    if (s2=="") return;
+
+    String s = (int.parse(queueID[queueID.length - 1]) + 1).toString();
+    setState(()=> queueString = "${queueString}Queue ID : $s\n");
+
+
+    setState(()=> queueString = "${queueString}Phone No : $s2\n");
 
     DatabaseReference ref3 = FirebaseDatabase.instance.ref("$selectedRest/Queues/$queueID/noOfPax");
     DatabaseEvent event3 = await ref3.once();
@@ -424,7 +436,7 @@ class _AvailableTablesState extends State<AvailableTables> {
     int minTime = 100;
     List<int> times = [8, 21, 36, 35, 9, 45, 30, 10, 50]; //testing
     //dont delete
-    /*for(int i=1; i<=totalTables; i++){
+    for(int i=1; i<=totalTables; i++){
       DatabaseReference ref2 = FirebaseDatabase.instance.ref("$selectedRest/Table/Table $i/waitTime");
       DatabaseReference ref3 = FirebaseDatabase.instance.ref("$selectedRest/Table/Table $i/clearTime");
       DatabaseEvent event2 = await ref2.once();
@@ -436,7 +448,7 @@ class _AvailableTablesState extends State<AvailableTables> {
       }else {
         times.add(waitTime + 5);
       }
-    }*/
+    }
     times.sort();
     print(times);
     int totalTablesAssigned = 0;
@@ -500,12 +512,63 @@ class _AvailableTablesState extends State<AvailableTables> {
     reviewController.clear();
   }
 
+  Future viewReviews() async{
+    setState(()=> fetchReviews = true);
+    DatabaseReference ref3 = FirebaseDatabase.instance.ref('$selectedRest/reviews/totalReviews');
+    DatabaseEvent event2 = await ref3.once();
+    setState(()=> totalReviews = event2.snapshot.value as int);
+    print(totalReviews);
+    for(int i=0; i<totalReviews; i++){
+      DatabaseReference ref4 = FirebaseDatabase.instance.ref('$selectedRest/reviews/review$i');
+      DatabaseEvent event4 = await ref4.once();
+      setState(()=> reviewList.add(event4.snapshot.value as String));
+    }
+    setState(()=> endReview = true);
+    setState(()=> fetchReviews = false);
+  }
+
   @override
   Widget build(BuildContext context) {
     if (selectRest) {
-      if(logoURL=="") {
+      if(logoURL==""||fetchReviews) {
         return const CircularProgressIndicator();
-      } else {
+      }
+      else if(endReview){
+        return ListView.builder(
+                  itemCount: totalReviews,
+                  itemBuilder: (context, index){
+                    return Column(
+                      children: [
+                        if(index==0)
+                          ElevatedButton(onPressed: (){setState(()=> endReview = false);}, child: const Text("Back")),
+                        SizedBox(
+                          width: 280,
+                          child: Card(
+                            shadowColor: Colors.amber,
+                            color: Colors.amber[700],
+                            elevation: 5,
+                            child: Padding(
+                              padding: const EdgeInsets.all(15),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    reviewList[index],
+                                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                                  ),
+                                  const SizedBox(
+                                    height: 12,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  });
+      }
+      else {
         return SingleChildScrollView(
           child: Column(
           children: [
@@ -583,7 +646,13 @@ class _AvailableTablesState extends State<AvailableTables> {
                 style: ElevatedButton.styleFrom(
                   primary: Colors.green,
                 ), child: const Text("Cancel queue"),),
-            ElevatedButton(onPressed: (){setState(()=> tapReview = !tapReview);}, child: const Text("Review")),
+            ElevatedButton(onPressed: (){setState(()=> tapReview = !tapReview);}, child: const Text("Reviews")),
+            if (tapReview)
+            ElevatedButton(onPressed: (){viewReviews();},
+                style: ElevatedButton.styleFrom(
+                  primary: Colors.green,
+                ),
+                child: const Text("View reviews")),
             if (tapReview)
               SizedBox(
                   height: 250,
@@ -598,6 +667,7 @@ class _AvailableTablesState extends State<AvailableTables> {
                     maxLines: 8,
                   )
               ),
+            
             if (tapReview)
             ElevatedButton(onPressed: (){submitReview();},
               style: ElevatedButton.styleFrom(
