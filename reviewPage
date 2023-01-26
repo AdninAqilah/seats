@@ -1,0 +1,41 @@
+import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+
+class ReviewPage extends StatefulWidget {
+  const ReviewPage({Key? key}) : super(key: key);
+
+  @override
+  State<ReviewPage> createState() => _ReviewPageState();
+}
+
+class _ReviewPageState extends State<ReviewPage> {
+  int totalReviews = 0;
+  bool end = false;
+
+  Future getData() async{
+    DatabaseReference ref2 = FirebaseDatabase.instance.ref("uids/$uid");
+    DatabaseEvent event = await ref2.once();
+    String restID = event.snapshot.value as String; //rest2
+    DatabaseReference ref3 = FirebaseDatabase.instance.ref(restID);
+    DatabaseReference ref = FirebaseDatabase.instance.ref("numOfRests");
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!end){
+      getData();
+      return const CircularProgressIndicator();
+    }
+    else {
+      return ListView.builder(
+        itemCount: totalReviews,
+        itemBuilder: (context, index){
+          return Text(
+              "hello$index"
+          );
+        })
+    ;
+    }
+  }
+}
