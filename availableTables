@@ -1,4 +1,3 @@
-import 'dart:collection';
 import 'dart:math';
 
 import 'package:firebase_auth/firebase_auth.dart';
@@ -33,6 +32,7 @@ class _AvailableTablesState extends State<AvailableTables> {
   bool viewQueue = false;
   final nOPController = TextEditingController();
   final phoneNoController = TextEditingController();
+  final reviewController = TextEditingController();
   int totalTables = 0;
   String estTime = "";
   bool showTime = false;
@@ -43,6 +43,8 @@ class _AvailableTablesState extends State<AvailableTables> {
   bool queueOnce = false;
   Map status = {};
   double distance = 0;
+  String restaurantName = "";
+  bool tapReview = false;
 
   Future<void> toShowLogo() async {
     DatabaseReference ref = FirebaseDatabase.instance.ref("$selectedRest/logoURL");
@@ -97,14 +99,11 @@ class _AvailableTablesState extends State<AvailableTables> {
     double longC = 0;
     await getCurrentLocation().then((value) {
       String C = '${value.latitude}';
-      print('C: $C');
       latC = double.parse(C);
-      print('latC: $latC');
       String D = '${value.longitude}';
       longC = double.parse(D);
     });
-    print('Customers: $latC, $longC');
-    print(s);
+
     s = s.substring(10);
     double latR = double.parse(s.split(', longitude: ')[0]);
     double longR = double.parse(s.split(', longitude: ')[1]);
@@ -119,7 +118,6 @@ class _AvailableTablesState extends State<AvailableTables> {
   Future<Position> getCurrentLocation() async{
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if(!serviceEnabled){
-      print('Location service is disabled');
       return Future.error('Location service is disabled');
     }
     LocationPermission permission = await Geolocator.checkPermission();
@@ -329,7 +327,7 @@ class _AvailableTablesState extends State<AvailableTables> {
   );
 
   Future submitQueue() async{
-    calculateEstTime();
+    await calculateEstTime();
     DatabaseReference ref = FirebaseDatabase.instance.ref("$selectedRest/Queues/totalQueues");
     DatabaseEvent event = await ref.once();
     int totalQueues = event.snapshot.value as int;
@@ -353,6 +351,7 @@ class _AvailableTablesState extends State<AvailableTables> {
         selectedRest: "queue$totalQueues",
       }
     });
+
     getQueueInfo();
   }
 
@@ -411,6 +410,7 @@ class _AvailableTablesState extends State<AvailableTables> {
     setState(()=> showQueueInfo = false);
     setState(()=> viewQueue = true);
     setState(()=> queueString = "");
+    setState(()=> queueOnce = false);
     recalculateTime();
   }
 
@@ -487,6 +487,19 @@ class _AvailableTablesState extends State<AvailableTables> {
     } //end of for loop
   }
 
+  Future submitReview() async{
+    DatabaseReference ref = FirebaseDatabase.instance.ref('$selectedRest/reviews/totalReviews');
+    DatabaseEvent event = await ref.once();
+    int totalReviews = event.snapshot.value as int;
+    print(totalReviews);
+    DatabaseReference ref2 = FirebaseDatabase.instance.ref("$selectedRest/reviews");
+    await ref2.update({
+      'review$totalReviews' : reviewController.text,
+      'totalReviews': totalReviews+1
+    });
+    reviewController.clear();
+  }
+
   @override
   Widget build(BuildContext context) {
     if (selectRest) {
@@ -496,6 +509,22 @@ class _AvailableTablesState extends State<AvailableTables> {
         return SingleChildScrollView(
           child: Column(
           children: [
+            Card(
+              shadowColor: Colors.amber,
+              color: Colors.amber[700],
+              child: Padding(
+                padding: const EdgeInsets.all(15),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      restaurantName,
+                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+              ),
+            ),
             Image.network(logoURL, width: 160, height: 160,),
             ElevatedButton(onPressed: (){getMenu();}, child: const Text("Menu")),
             if (viewMenu) Card (
@@ -505,7 +534,9 @@ class _AvailableTablesState extends State<AvailableTables> {
               child: Text(menuString, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),)
             ),
             if(status[selectedRest]=='O')
-            ElevatedButton(onPressed: (){getQueueInfo(); addQueue();}, child: const Text("Queue")),
+            ElevatedButton(onPressed: (){getQueueInfo(); addQueue();
+              if(showTime) setState(()=> showTime = !showTime);
+              }, child: const Text("Queue")),
             if (viewQueue&&queueString=="")
               SizedBox(
                 width: 250.0,
@@ -540,18 +571,38 @@ class _AvailableTablesState extends State<AvailableTables> {
                 style: ElevatedButton.styleFrom(
                   primary: Colors.green,
                 ), child: const Text("Submit Queue"),),
-            if (showQueueInfo)
+            if (showQueueInfo&&viewQueue)
               Card (
                   shadowColor: Colors.amber,
                   color: Colors.amber[700],
                   elevation: 5,
                   child: Text(queueString, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),)
               ),
-            if (showQueueInfo)
+            if (showQueueInfo&&viewQueue)
               ElevatedButton(onPressed: (){cancelQueue();},
                 style: ElevatedButton.styleFrom(
                   primary: Colors.green,
                 ), child: const Text("Cancel queue"),),
+            ElevatedButton(onPressed: (){setState(()=> tapReview = !tapReview);}, child: const Text("Review")),
+            if (tapReview)
+              SizedBox(
+                  height: 250,
+                  width: 350,
+                  child: TextFormField(
+                    controller: reviewController,
+                    decoration: const InputDecoration(
+                      hintText: 'Enter Review...',
+                      border: OutlineInputBorder(),
+                      //contentPadding: EdgeInsets.symmetric(vertical: 18.0,horizontal: 150.0),
+                    ),
+                    maxLines: 8,
+                  )
+              ),
+            if (tapReview)
+            ElevatedButton(onPressed: (){submitReview();},
+              style: ElevatedButton.styleFrom(
+                primary: Colors.green,
+              ), child: const Text("Submit Review"),),
             ElevatedButton(onPressed: (){setState(()=> selectRest = false);},
               style: ElevatedButton.styleFrom(
                 primary: Colors.blue,
@@ -564,7 +615,6 @@ class _AvailableTablesState extends State<AvailableTables> {
     if (!end) {
       if(numOfRests==0) getData();
       return const CircularProgressIndicator();
-
     } else {
       return ListView.builder(
           itemCount: numOfRests,
@@ -578,6 +628,7 @@ class _AvailableTablesState extends State<AvailableTables> {
                     selectedRest = "rest$index";
                   });
                   toShowLogo();
+                  setState(()=> restaurantName = nameList[index]);
                     setState(() {
                     selectRest = true;
                   });
