@@ -51,7 +51,14 @@ class _AvailableTablesState extends State<AvailableTables> {
   bool endReview = false;
   List<String> reviewList = [];
   bool fetchReviews = false;
-  String dropDownValue = '5 ★';
+  String dropDownValue = '5★';
+  var items = [
+    '1★',
+    '2★',
+    '3★',
+    '4★',
+    '5★',
+  ];
 
   Future<void> toShowLogo() async {
     DatabaseReference ref = FirebaseDatabase.instance.ref("$selectedRest/logoURL");
@@ -506,10 +513,9 @@ class _AvailableTablesState extends State<AvailableTables> {
     DatabaseReference ref = FirebaseDatabase.instance.ref('$selectedRest/reviews/totalReviews');
     DatabaseEvent event = await ref.once();
     int totalReviews = event.snapshot.value as int;
-    print(totalReviews);
     DatabaseReference ref2 = FirebaseDatabase.instance.ref("$selectedRest/reviews");
     await ref2.update({
-      'review$totalReviews' : reviewController.text,
+      'review$totalReviews' : "${reviewController.text} ($dropDownValue)",
       'totalReviews': totalReviews+1
     });
     reviewController.clear();
@@ -521,7 +527,7 @@ class _AvailableTablesState extends State<AvailableTables> {
     DatabaseEvent event2 = await ref3.once();
     setState(()=> totalReviews = event2.snapshot.value as int);
     print(totalReviews);
-    for(int i=0; i<totalReviews; i++){
+    for(int i=totalReviews-1; i>=0; i--){
       DatabaseReference ref4 = FirebaseDatabase.instance.ref('$selectedRest/reviews/review$i');
       DatabaseEvent event4 = await ref4.once();
       setState(()=> reviewList.add(event4.snapshot.value as String));
@@ -671,7 +677,23 @@ class _AvailableTablesState extends State<AvailableTables> {
                   )
               ),
             if (tapReview)
-
+              DropdownButton(
+                value: dropDownValue,
+                icon: const Icon(Icons.keyboard_arrow_down),
+                items: items.map((String items) {
+                  return DropdownMenuItem(
+                    value: items,
+                    child: Text(items),
+                  );
+                }).toList(),
+                // After selecting the desired option,it will
+                // change button value to selected value
+                onChanged: (String? newValue) {
+                  setState(() {
+                    dropDownValue = newValue!;
+                  });
+                },
+              ),
             if (tapReview)
             ElevatedButton(onPressed: (){submitReview();},
               style: ElevatedButton.styleFrom(
