@@ -51,6 +51,7 @@ class _AvailableTablesState extends State<AvailableTables> {
   bool endReview = false;
   List<String> reviewList = [];
   bool fetchReviews = false;
+  String dropDownValue = '5 ★';
 
   Future<void> toShowLogo() async {
     DatabaseReference ref = FirebaseDatabase.instance.ref("$selectedRest/logoURL");
@@ -434,7 +435,7 @@ class _AvailableTablesState extends State<AvailableTables> {
     int waitTime = 0;
     int clearTime = 0;
     int minTime = 100;
-    List<int> times = [8, 21, 36, 35, 9, 45, 30, 10, 50]; //testing
+    List<int> times = []; //testing
     //dont delete
     for(int i=1; i<=totalTables; i++){
       DatabaseReference ref2 = FirebaseDatabase.instance.ref("$selectedRest/Table/Table $i/waitTime");
@@ -445,8 +446,10 @@ class _AvailableTablesState extends State<AvailableTables> {
       clearTime = event3.snapshot.value as int;
       if(clearTime!=0){
         times.add(clearTime);
-      }else {
+      }else if(waitTime!=0){
         times.add(waitTime + 5);
+      }else {
+        times.add(waitTime);
       }
     }
     times.sort();
@@ -667,7 +670,8 @@ class _AvailableTablesState extends State<AvailableTables> {
                     maxLines: 8,
                   )
               ),
-            
+            if (tapReview)
+
             if (tapReview)
             ElevatedButton(onPressed: (){submitReview();},
               style: ElevatedButton.styleFrom(
