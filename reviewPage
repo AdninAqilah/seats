@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -12,27 +13,55 @@ class ReviewPage extends StatefulWidget {
 class _ReviewPageState extends State<ReviewPage> {
   int totalReviews = 0;
   bool end = false;
+  List<String> reviewList = [];
 
   Future getData() async{
+    var currentUser = FirebaseAuth.instance.currentUser;
+    var uid = currentUser?.uid;
     DatabaseReference ref2 = FirebaseDatabase.instance.ref("uids/$uid");
     DatabaseEvent event = await ref2.once();
     String restID = event.snapshot.value as String; //rest2
-    DatabaseReference ref3 = FirebaseDatabase.instance.ref(restID);
-    DatabaseReference ref = FirebaseDatabase.instance.ref("numOfRests");
+    DatabaseReference ref3 = FirebaseDatabase.instance.ref('$restID/reviews/totalReviews');
+    DatabaseEvent event2 = await ref3.once();
+    setState(()=> totalReviews = event2.snapshot.value as int);
+
+    for(int i=0; i<totalReviews; i++){
+      DatabaseReference ref4 = FirebaseDatabase.instance.ref('$restID/reviews/review$i');
+      DatabaseEvent event4 = await ref4.once();
+      setState(()=> reviewList.add(event4.snapshot.value as String));
+    }
+    setState(()=> end = true);
   }
 
   @override
   Widget build(BuildContext context) {
     if (!end){
-      getData();
+      if(totalReviews==0) getData();
       return const CircularProgressIndicator();
     }
     else {
       return ListView.builder(
         itemCount: totalReviews,
         itemBuilder: (context, index){
-          return Text(
-              "hello$index"
+          return Card(
+            shadowColor: Colors.amber,
+            color: Colors.amber[700],
+            elevation: 5,
+            child: Padding(
+              padding: const EdgeInsets.all(15),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    reviewList[index],
+                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(
+                    height: 12,
+                  ),
+                ],
+              ),
+            ),
           );
         })
     ;
