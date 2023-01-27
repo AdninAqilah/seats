@@ -52,7 +52,17 @@ class _AvailableTablesState extends State<AvailableTables> {
   List<String> reviewList = [];
   bool fetchReviews = false;
   String dropDownValue = '5★';
+  String dropDownValue2 = 'All';
   var items = [
+    '1★',
+    '2★',
+    '3★',
+    '4★',
+    '5★',
+  ];
+
+  var items2 = [
+    'All',
     '1★',
     '2★',
     '3★',
@@ -526,12 +536,14 @@ class _AvailableTablesState extends State<AvailableTables> {
     DatabaseReference ref3 = FirebaseDatabase.instance.ref('$selectedRest/reviews/totalReviews');
     DatabaseEvent event2 = await ref3.once();
     setState(()=> totalReviews = event2.snapshot.value as int);
-    print(totalReviews);
+    //setState(()=> reviewList = []);
+
     for(int i=totalReviews-1; i>=0; i--){
       DatabaseReference ref4 = FirebaseDatabase.instance.ref('$selectedRest/reviews/review$i');
       DatabaseEvent event4 = await ref4.once();
       setState(()=> reviewList.add(event4.snapshot.value as String));
     }
+
     setState(()=> endReview = true);
     setState(()=> fetchReviews = false);
   }
@@ -550,6 +562,25 @@ class _AvailableTablesState extends State<AvailableTables> {
                       children: [
                         if(index==0)
                           ElevatedButton(onPressed: (){setState(()=> endReview = false);}, child: const Text("Back")),
+                        if(index==0)
+                          Text('Sort', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green[900],)),
+                        if(index==0)
+                          DropdownButton(
+                            value: dropDownValue2,
+                            icon: const Icon(Icons.keyboard_arrow_down),
+                            items: items2.map((String items) {
+                              return DropdownMenuItem(
+                                value: items,
+                                child: Text(items),
+                              );
+                            }).toList(),
+                            onChanged: (String? newValue) {
+                              setState(() {
+                                dropDownValue2 = newValue!;
+                              });
+                            },
+                          ),
+                        if(dropDownValue2=="All" || reviewList[index].substring(reviewList[index].length-3,reviewList[index].length-1)==dropDownValue2)
                         SizedBox(
                           width: 280,
                           child: Card(
@@ -686,8 +717,6 @@ class _AvailableTablesState extends State<AvailableTables> {
                     child: Text(items),
                   );
                 }).toList(),
-                // After selecting the desired option,it will
-                // change button value to selected value
                 onChanged: (String? newValue) {
                   setState(() {
                     dropDownValue = newValue!;
