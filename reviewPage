@@ -14,6 +14,15 @@ class _ReviewPageState extends State<ReviewPage> {
   int totalReviews = 0;
   bool end = false;
   List<String> reviewList = [];
+  var items2 = [
+    'All',
+    '1★',
+    '2★',
+    '3★',
+    '4★',
+    '5★',
+  ];
+  String dropDownValue2 = 'All';
 
   Future getData() async{
     var currentUser = FirebaseAuth.instance.currentUser;
@@ -43,25 +52,51 @@ class _ReviewPageState extends State<ReviewPage> {
       return ListView.builder(
         itemCount: totalReviews,
         itemBuilder: (context, index){
-          return Card(
-            shadowColor: Colors.amber,
-            color: Colors.amber[700],
-            elevation: 5,
-            child: Padding(
-              padding: const EdgeInsets.all(15),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    reviewList[index],
-                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+          return Column(
+            children: [
+              if(index==0)
+                Text('Sort', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green[900],)),
+              if(index==0)
+                DropdownButton(
+                  value: dropDownValue2,
+                  icon: const Icon(Icons.keyboard_arrow_down),
+                  items: items2.map((String items) {
+                    return DropdownMenuItem(
+                      value: items,
+                      child: Text(items),
+                    );
+                  }).toList(),
+                  onChanged: (String? newValue) {
+                    setState(() {
+                      dropDownValue2 = newValue!;
+                    });
+                  },
+                ),
+              if(dropDownValue2=="All" || reviewList[index].substring(reviewList[index].length-3,reviewList[index].length-1)==dropDownValue2)
+              SizedBox(
+                width: 280,
+                child: Card(
+                  shadowColor: Colors.amber,
+                  color: Colors.amber[700],
+                  elevation: 5,
+                  child: Padding(
+                    padding: const EdgeInsets.all(15),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          reviewList[index],
+                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(
+                          height: 12,
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(
-                    height: 12,
-                  ),
-                ],
+                ),
               ),
-            ),
+            ],
           );
         })
     ;
