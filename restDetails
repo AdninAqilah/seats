@@ -419,15 +419,20 @@ class _restDetailsState extends State<restDetails> {
                                 fontSize: 18, color: Colors.lightGreen[900]),
                           ),
                         ),
-                        Row(
-                          children: <Widget>[
-                            Text(location,
-                              textAlign: TextAlign.left,
-                              style: TextStyle(fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.blueAccent[900]),
-                            ),
-                          ],
+                        SizedBox(
+                          width: double.infinity,
+                          child: Row(
+                            children: <Widget>[
+                              Text('${location.split(', ')[0]}\n${location.split(', ')[1]}',
+                                //overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.left,
+                                //softWrap: false,
+                                style: TextStyle(fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.blueAccent[900]),
+                              ),
+                            ],
+                          ),
                         ),
                         ElevatedButton(onPressed: (){
                           getCurrentLocation().then((value) {
