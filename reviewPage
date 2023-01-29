@@ -77,7 +77,7 @@ class _ReviewPageState extends State<ReviewPage> {
                 width: 280,
                 child: Card(
                   shadowColor: Colors.amber,
-                  color: Colors.amber[700],
+                  color: Colors.amber[100],
                   elevation: 5,
                   child: Padding(
                     padding: const EdgeInsets.all(15),
