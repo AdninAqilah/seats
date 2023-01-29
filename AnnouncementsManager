@@ -228,7 +228,7 @@ class ShowAnnouncementsList extends StatelessWidget {
                   itemBuilder: (context, index){
                     return Card(
                       shadowColor: Colors.amber,
-                      color: Colors.amber[700],
+                      color: Colors.amber[100],
                       elevation: 5,
                       child: Padding(
                         padding: const EdgeInsets.all(15),
