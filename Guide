@@ -7,7 +7,7 @@ class Guide extends StatelessWidget {
   Widget build (BuildContext context) {
     return Card(
       shadowColor: Colors.amber,
-      color: Colors.amber[700],
+      color: Colors.amber[100],
       elevation: 5,
       child: Padding(
         padding: const EdgeInsets.all(15.0),
@@ -70,7 +70,7 @@ class GuideManager extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       shadowColor: Colors.amber,
-      color: Colors.amber[700],
+      color: Colors.amber[100],
       elevation: 5,
       child: Padding(
         padding: const EdgeInsets.all(15),
