@@ -1,53 +1,18 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:fypseats/screens/home/editRestDetails.dart';
-import 'package:fypseats/screens/home/listRestaurants.dart';
 import 'package:fypseats/screens/home/restDetails.dart';
+import 'package:fypseats/screens/home/reviewPage.dart';
 import 'package:fypseats/screens/home/sign_out.dart';
-import './guide.dart';
+
+import 'announcements_manager.dart';
+import 'guide.dart';
+//import './guide.dart';
 
 class Home extends StatelessWidget {
   const Home({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return MainPage();
-    /*final user = FirebaseAuth.instance.currentUser!;
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Home'),
-      ),
-      body: Padding(
-        padding: EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Image(image: AssetImage('assets/seatsLogo2.png')),
-            Text(
-              'Welcome',
-              style: TextStyle(fontSize: 16)
-            ),
-            SizedBox(height: 8,),
-            Text(
-              user.email!,
-              style: TextStyle(fontSize: 20,)
-            ),
-            ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              minimumSize: Size.fromHeight(50)
-            ),
-              icon: Icon(Icons.arrow_back, size: 32,),
-              label: Text(
-                'Sign Out',
-                style: TextStyle(fontSize: 24),
-              ),
-              onPressed: () => FirebaseAuth.instance.signOut(),
-            )
-          ],
-        ),
-      ),
-    );*/
+    return const MainPage();
   }
 }
 
@@ -61,52 +26,23 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> {
   int index = 0;
   final screens = [
-    Center(child: signOutPage()),
-    Center(child: EditRestDetails())
+    const Center(child: signOutPage()),
+    const Center(child: restDetails()),
+    const Center(child: AnnouncementsManager()),
+    const Center(child: ReviewPage()),
+    const Center(child: GuideManager()),
   ];
   @override
   Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser!;
     return Scaffold(
       appBar: AppBar(
-        title: Text('SEATS'),),
+        title: const Text('SEATS'),),
       body: screens[index],
-      /*Padding(
-        padding: EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Image(image: AssetImage('assets/seatsLogo2.png')),
-            Text(
-                'Welcome',
-                style: TextStyle(fontSize: 16)
-            ),
-            SizedBox(height: 8,),
-            Text(
-                user.email!,
-                style: TextStyle(fontSize: 20,)
-            ),
-
-            ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                  minimumSize: Size.fromHeight(50)
-              ),
-              icon: Icon(Icons.arrow_back, size: 32,),
-              label: Text(
-                'Sign Out',
-                style: TextStyle(fontSize: 24),
-              ),
-              onPressed: () => FirebaseAuth.instance.signOut(),
-            ),
-
-          ],
-        ),
-      ),*/
       bottomNavigationBar: NavigationBarTheme(
         data: NavigationBarThemeData(
           indicatorColor: Colors.greenAccent,
           labelTextStyle: MaterialStateProperty.all(
-            TextStyle(fontSize: 14, fontWeight: FontWeight.w500)
+            const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)
           ),
         ),
         child: NavigationBar(
@@ -115,11 +51,13 @@ class _MainPageState extends State<MainPage> {
         selectedIndex: index,
         onDestinationSelected: (index) =>
           setState(() => this.index = index),
-        destinations: [
+        destinations: const [
           NavigationDestination(icon: Icon(Icons.home), label: 'Home'),
           NavigationDestination(icon: Icon(Icons.checklist), label: 'Details'),
           NavigationDestination(
               icon: Icon(Icons.announcement), label: 'Announcement'),
+          NavigationDestination(
+              icon: Icon(Icons.rate_review), label: 'Reviews'),
           NavigationDestination(
               icon: Icon(Icons.question_mark), label: 'Guide'),
         ],
@@ -130,19 +68,5 @@ class _MainPageState extends State<MainPage> {
   }
 
 
-  Future updateDetails() async {
-    var currentUser = FirebaseAuth.instance.currentUser;
-    final docUser = FirebaseFirestore.instance.collection('restaurants').doc(currentUser?.uid);
 
-    final json = {
-      'name' : '',
-
-    };
-
-    try{
-      await docUser.set(json);
-    }catch(e){
-      print(e);
-    }
-  }
 }
