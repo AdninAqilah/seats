@@ -69,6 +69,7 @@ class _AvailableTablesState extends State<AvailableTables> {
     '4★',
     '5★',
   ];
+  bool stop = false;
 
   Future<void> toShowLogo() async {
     DatabaseReference ref = FirebaseDatabase.instance.ref("$selectedRest/logoURL");
@@ -188,7 +189,7 @@ class _AvailableTablesState extends State<AvailableTables> {
       if (closeTimeList[2]=="PM"&&closeTimeList[0]!="12") {
         closeHour = int.parse(closeTimeList[0]) + 12;
       } else if (closeTimeList[2]=="AM"&&closeTimeList[0]=="12"){
-        closeHour = 0;
+        closeHour = 24;
       } else {
         closeHour = int.parse(closeTimeList[0]);
       }
@@ -199,6 +200,10 @@ class _AvailableTablesState extends State<AvailableTables> {
       double currentTime = currentHour + currentMinute/60;
       double openTimeDouble = openHour + openMinute/60;
       double closeTimeDouble = closeHour + closeMinute/60;
+
+      print('current: $currentTime');
+      print('open: $openTimeDouble');
+      print('close: $closeTimeDouble');
 
       if (currentTime<openTimeDouble||currentTime>=closeTimeDouble){
         return false;
@@ -240,11 +245,13 @@ class _AvailableTablesState extends State<AvailableTables> {
   Future calculateEstTime() async{
     if (!isNumeric(nOPController.text)){
       showToast();
+      setState(()=> stop = true);
       return;
     }
     setState(()=> pax = int.parse(nOPController.text));
     if (pax==0) {
       showToast2();
+      setState(()=> stop = true);
       return;
     }
 
@@ -253,14 +260,16 @@ class _AvailableTablesState extends State<AvailableTables> {
     setState(()=> totalTables = event.snapshot.value as int);
     if(pax>totalTables*4) {
       showToast3();
+      setState(()=> stop = true);
       return;
     }
     int waitTime = 0;
     int clearTime = 0;
     int minTime = 100;
-    List<int> times = []; //testing
+    List<int> times = [40, 34, 32, 36, 2, 3, 24, 19, 13]; //testing
+    //List<int> times = [];
     //dont delete
-    for(int i=1; i<=totalTables; i++){
+    /*for(int i=1; i<=totalTables; i++){
       DatabaseReference ref2 = FirebaseDatabase.instance.ref("$selectedRest/Table/Table $i/waitTime");
       DatabaseReference ref3 = FirebaseDatabase.instance.ref("$selectedRest/Table/Table $i/clearTime");
       DatabaseEvent event2 = await ref2.once();
@@ -274,7 +283,7 @@ class _AvailableTablesState extends State<AvailableTables> {
       }else {
         times.add(waitTime);
       }
-    }
+    }*/
     times.sort();
     print(times);
 
@@ -324,7 +333,7 @@ class _AvailableTablesState extends State<AvailableTables> {
     }else {
       setState(()=> estTime = "$hour:$minute $ampm");
     }
-    setState(()=> showTime = true);
+    //setState(()=> showTime = true);
     //print("$hour:$minute $ampm");
   }
 
@@ -353,7 +362,9 @@ class _AvailableTablesState extends State<AvailableTables> {
   );
 
   Future submitQueue() async{
+    setState(()=> stop = false);
     await calculateEstTime();
+    if(stop) return;
     DatabaseReference ref = FirebaseDatabase.instance.ref("$selectedRest/Queues/totalQueues");
     DatabaseEvent event = await ref.once();
     int totalQueues = event.snapshot.value as int;
@@ -389,9 +400,9 @@ class _AvailableTablesState extends State<AvailableTables> {
     DatabaseEvent event = await ref.once();
     if(!event.snapshot.exists) return; //takde restaurant tu
 
-    String queueID = event.snapshot.value as String;
+    String queueID = event.snapshot.value as String; //queue6
     if(queueID=="") return;
-    setState(()=> viewQueue = false);
+    //setState(()=> viewQueue = false);
 
     DatabaseReference ref2 = FirebaseDatabase.instance.ref("$selectedRest/Queues/$queueID/phoneNo");
     DatabaseEvent event2 = await ref2.once();
@@ -585,7 +596,7 @@ class _AvailableTablesState extends State<AvailableTables> {
                           width: 280,
                           child: Card(
                             shadowColor: Colors.amber,
-                            color: Colors.amber[700],
+                            color: Colors.amber[100],
                             elevation: 5,
                             child: Padding(
                               padding: const EdgeInsets.all(15),
@@ -614,7 +625,7 @@ class _AvailableTablesState extends State<AvailableTables> {
           children: [
             Card(
               shadowColor: Colors.amber,
-              color: Colors.amber[700],
+              color: Colors.amber[100],
               child: Padding(
                 padding: const EdgeInsets.all(15),
                 child: Column(
@@ -632,12 +643,12 @@ class _AvailableTablesState extends State<AvailableTables> {
             ElevatedButton(onPressed: (){getMenu();}, child: const Text("Menu")),
             if (viewMenu) Card (
                 shadowColor: Colors.amber,
-                color: Colors.amber[700],
+                color: Colors.amber[100],
                 elevation: 5,
               child: Text(menuString, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),)
             ),
             if(status[selectedRest]=='O')
-            ElevatedButton(onPressed: (){getQueueInfo(); addQueue();
+            ElevatedButton(onPressed: () async {await getQueueInfo(); addQueue();
               if(showTime) setState(()=> showTime = !showTime);
               }, child: const Text("Queue")),
             if (viewQueue&&queueString=="")
@@ -663,7 +674,7 @@ class _AvailableTablesState extends State<AvailableTables> {
                 ),
               ),
             if (viewQueue&&queueString=="")
-            ElevatedButton(onPressed: (){calculateEstTime();},
+            ElevatedButton(onPressed: () async {await calculateEstTime(); setState(()=> showTime = !showTime);},
                 style: ElevatedButton.styleFrom(
                   primary: Colors.green,
                 ), child: const Text("Show estimated time")),
@@ -677,7 +688,7 @@ class _AvailableTablesState extends State<AvailableTables> {
             if (showQueueInfo&&viewQueue)
               Card (
                   shadowColor: Colors.amber,
-                  color: Colors.amber[700],
+                  color: Colors.amber[100],
                   elevation: 5,
                   child: Text(queueString, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),)
               ),
