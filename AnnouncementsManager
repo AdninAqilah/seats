@@ -18,7 +18,7 @@ class _AnnouncementsManagerState extends State<AnnouncementsManager> {
 
   void toViewList() {
     setState(() {
-      showList = true;
+      showList = showList!;
     });
   }
 
@@ -135,7 +135,7 @@ class _AnnouncementsManagerState extends State<AnnouncementsManager> {
     final date = DateTime.utc(2022, 9, 9);
     final difference = currentTime.difference(date).inMinutes;
 
-    String getName(){
+    /*String getName(){
       String name = "none";
       FutureBuilder<DocumentSnapshot>(
         future: docUser.get(),
@@ -163,7 +163,7 @@ class _AnnouncementsManagerState extends State<AnnouncementsManager> {
       );
 
       return name;
-    }
+    }*/
 
     if(textController.text == "" || dateUntil == DateTime(2000, 1, 1) || dateFrom == DateTime(2000, 1, 1) ||
     dateUntil.isBefore(dateFrom)){
@@ -183,7 +183,7 @@ class _AnnouncementsManagerState extends State<AnnouncementsManager> {
         }
       );
       showToastSubmitted();
-      print(getName());
+      //print(getName());
     }
   }
 
@@ -198,8 +198,16 @@ class _AnnouncementsManagerState extends State<AnnouncementsManager> {
   );
 }
 
-class ShowAnnouncementsList extends StatelessWidget {
+class ShowAnnouncementsList extends StatefulWidget {
   const ShowAnnouncementsList({Key? key}) : super(key: key);
+
+  @override
+  State<ShowAnnouncementsList> createState() => _ShowAnnouncementsListState();
+}
+
+class _ShowAnnouncementsListState extends State<ShowAnnouncementsList> {
+
+  bool startDelete = false;
 
   @override
   Widget build(BuildContext context) {
@@ -207,6 +215,24 @@ class ShowAnnouncementsList extends StatelessWidget {
     CollectionReference user = FirebaseFirestore.instance.collection(
         'restaurants');
     var docUser = user.doc(uid);
+
+    Future deleteAnnouncement(int id) async{
+      setState(()=> startDelete = true);
+      final annDoc = FirebaseFirestore.instance.collection('restaurants').doc('announcements');
+
+      await docUser.update(
+          {
+            'annNum': FieldValue.arrayRemove([id]),
+            'announcement$id': FieldValue.delete()
+          }
+      );
+
+      await annDoc.update({
+        'annID': FieldValue.arrayRemove(['$uid$id']),
+        '$uid$id': FieldValue.delete()
+      });
+      setState(()=> startDelete = false);
+    }
 
     return FutureBuilder<DocumentSnapshot>(
         future: docUser.get(),
@@ -222,39 +248,59 @@ class ShowAnnouncementsList extends StatelessWidget {
             Map<String, dynamic> data = snapshot.data!.data() as Map<String,
                 dynamic>;
             int arrLength = data['annNum'].length;
-//
-            return ListView.builder(
+
+            if(arrLength==0) {
+              return const Text('no announcement posted');
+            } else if (!startDelete) {
+              return ListView.builder(
                   itemCount: arrLength,
                   itemBuilder: (context, index){
-                    return Card(
-                      shadowColor: Colors.amber,
-                      color: Colors.amber[100],
-                      elevation: 5,
-                      child: Padding(
-                        padding: const EdgeInsets.all(15),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '${data['announcement${data['annNum'][index]}'][0]}',
-                              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                            ), //${data['announcement${data['annNum'][index]}'][0]}
-                            const SizedBox(
-                              height: 12,
-                            ),
-                            Text(
-                              'Post from ${data['announcement${data['annNum'][index]}'][1].toDate()} to ${data['announcement${data['annNum'][index]}'][2].toDate()}',
-                              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                            ),
-                          ],
+                    return Row(
+                      children: [
+                        SizedBox(
+                          width: 300,
+                          child: Card(
+                            shadowColor: Colors.amber,
+                            color: Colors.amber[100],
+                            elevation: 5,
+                            //child: Padding(
+                              //padding: const EdgeInsets.all(15),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '${data['announcement${data['annNum'][index]}'][0]}',
+                                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                                  ), //${data['announcement${data['annNum'][index]}'][0]}
+                                  const SizedBox(
+                                    height: 12,
+                                  ),
+                                  Text(
+                                    'Post from ${data['announcement${data['annNum'][index]}'][1].toDate()} to ${data['announcement${data['annNum'][index]}'][2].toDate()}',
+                                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                              ),
+                            //),
+                          ),
                         ),
-                      ),
+                        IconButton(
+                          icon: const Icon(Icons.delete),
+                          onPressed: () {
+                            //print(data['annNum'][index]);
+                            deleteAnnouncement(data['annNum'][index]);
+                          },
+                        ),
+                      ],
                     );
                   }
               )
             ;
+            } else {
+              return const CircularProgressIndicator();
+            }
           }
-          return const Text("loading");
+          return const CircularProgressIndicator();
         }
     );
   }
