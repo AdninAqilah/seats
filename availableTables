@@ -361,10 +361,19 @@ class _AvailableTablesState extends State<AvailableTables> {
     fontSize: 18,
   );
 
+  void showToast5() => Fluttertoast.showToast(
+    msg: "Please enter phone no.",
+    fontSize: 18,
+  );
+
   Future submitQueue() async{
     setState(()=> stop = false);
     await calculateEstTime();
     if(stop) return;
+    if(phoneNoController.text==""){
+      showToast5();
+      return;
+    }
     DatabaseReference ref = FirebaseDatabase.instance.ref("$selectedRest/Queues/totalQueues");
     DatabaseEvent event = await ref.once();
     int totalQueues = event.snapshot.value as int;
@@ -463,9 +472,10 @@ class _AvailableTablesState extends State<AvailableTables> {
     int waitTime = 0;
     int clearTime = 0;
     int minTime = 100;
-    List<int> times = []; //testing
+    List<int> times = [40, 34, 32, 36, 2, 3, 24, 19, 13]; //testing
+    //List<int> times = [];
     //dont delete
-    for(int i=1; i<=totalTables; i++){
+    /*for(int i=1; i<=totalTables; i++){
       DatabaseReference ref2 = FirebaseDatabase.instance.ref("$selectedRest/Table/Table $i/waitTime");
       DatabaseReference ref3 = FirebaseDatabase.instance.ref("$selectedRest/Table/Table $i/clearTime");
       DatabaseEvent event2 = await ref2.once();
@@ -479,7 +489,7 @@ class _AvailableTablesState extends State<AvailableTables> {
       }else {
         times.add(waitTime);
       }
-    }
+    }*/
     times.sort();
     print(times);
     int totalTablesAssigned = 0;
@@ -547,6 +557,7 @@ class _AvailableTablesState extends State<AvailableTables> {
     DatabaseReference ref3 = FirebaseDatabase.instance.ref('$selectedRest/reviews/totalReviews');
     DatabaseEvent event2 = await ref3.once();
     setState(()=> totalReviews = event2.snapshot.value as int);
+    //if(totalReviews == 0)
     //setState(()=> reviewList = []);
 
     for(int i=totalReviews-1; i>=0; i--){
@@ -566,7 +577,8 @@ class _AvailableTablesState extends State<AvailableTables> {
         return const CircularProgressIndicator();
       }
       else if(endReview){
-        return ListView.builder(
+        if(totalReviews!=0) {
+          return ListView.builder(
                   itemCount: totalReviews,
                   itemBuilder: (context, index){
                     return Column(
@@ -618,6 +630,14 @@ class _AvailableTablesState extends State<AvailableTables> {
                       ],
                     );
                   });
+        } else {
+          return Column(
+            children: [
+              ElevatedButton(onPressed: (){setState(()=> endReview = false);}, child: const Text("Back")),
+              const Text("No reviews found", style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),),
+            ],
+          );
+        }
       }
       else {
         return SingleChildScrollView(
@@ -674,7 +694,7 @@ class _AvailableTablesState extends State<AvailableTables> {
                 ),
               ),
             if (viewQueue&&queueString=="")
-            ElevatedButton(onPressed: () async {await calculateEstTime(); setState(()=> showTime = !showTime);},
+            ElevatedButton(onPressed: () async {await calculateEstTime(); setState(()=> showTime = true);},
                 style: ElevatedButton.styleFrom(
                   primary: Colors.green,
                 ), child: const Text("Show estimated time")),
