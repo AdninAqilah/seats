@@ -49,9 +49,7 @@ class _RoleSelectionState extends State<RoleSelection> {
 
 
             ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size.fromHeight(50),
-              ),
+              style: ElevatedButton.styleFrom(fixedSize: const Size(280, 50)),
               icon: const Icon(Icons.navigate_next, size: 32,),
               label: const Text(
                 'Next',
@@ -166,3 +164,6 @@ class _RoleSelectionState extends State<RoleSelection> {
     fontSize: 18,
   );
   }
+
+
+
