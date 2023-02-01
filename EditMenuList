@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
@@ -96,6 +97,38 @@ class _EditMenuListState extends State<EditMenuList> {
     });
   }
 
+  Future deleteMenu(int index) async{
+    setState(()=> dishList.removeAt(index));
+    setState(()=> priceList.removeAt(index));
+    setState(()=> menuSize = menuSize - 1); //2
+
+    DatabaseReference ref = FirebaseDatabase.instance.ref("$restID/dishes");
+    DatabaseReference ref2 = FirebaseDatabase.instance.ref("$restID/prices");
+    DatabaseReference ref3 = FirebaseDatabase.instance.ref(restID);
+
+    for(int i=index; i<menuSize; i++){
+      await ref.update({
+        "dish$i" : dishList[i]
+      });
+
+      await ref2.update({
+        "price$i" : priceList[i]
+      });
+    }
+
+    await ref.update({
+      "dish$menuSize" : null
+    });
+
+    await ref2.update({
+      "price$menuSize" : null
+    });
+
+    await ref3.update({
+      "menuSize" : menuSize
+    });
+}
+
   @override
   Widget build(BuildContext context) {
     if (!end){
@@ -115,8 +148,19 @@ class _EditMenuListState extends State<EditMenuList> {
                 itemBuilder: (context, index){
                   return SizedBox(
                     height: 30,
-                    child: Text("${dishList[index]} - RM${priceList[index]}",
-                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),),
+                    width: 300,
+                    child: Row(
+                      children: [
+                        Text("${dishList[index]} - RM${priceList[index]}",
+                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),),
+                        IconButton(
+                          icon: const Icon(Icons.delete),
+                          onPressed: () {
+                            deleteMenu(index);
+                          },
+                        ),
+                      ],
+                    ),
                   );
                 }),
               if (addDish)
