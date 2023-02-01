@@ -72,8 +72,12 @@ class AnnouncementsCustomer extends StatelessWidget {
                               children: [
                                   Text(
                                   '${data['${data['${data['annID'][index]}'][0]}']}\n\n'
-                                  '${data['${data['annID'][index]}'][1]}',
+                                  ,
                                   style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                                ),
+                                Text(
+                                    '${data['${data['annID'][index]}'][1]}',
+                                  style: const TextStyle(fontSize: 15),
                                 ),
                                 const SizedBox(
                                   height: 12,
