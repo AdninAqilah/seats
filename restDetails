@@ -1,148 +1,483 @@
-import 'dart:math';
-
+import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:fypseats/screens/home/restDetails2.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:image_picker/image_picker.dart';
 
-class AvailableTables extends StatefulWidget {
-  const AvailableTables({Key? key}) : super(key: key);
+import 'editMenuList.dart';
+
+class restDetails extends StatefulWidget {
+  const restDetails({Key? key}) : super(key: key);
 
   @override
-  State<AvailableTables> createState() => _AvailableTablesState();
+  State<restDetails> createState() => _restDetailsState();
 }
 
+class _restDetailsState extends State<restDetails> {
+  bool monChecked = false;
+  bool tueChecked = false;
+  bool wedChecked = false;
+  bool thuChecked = false;
+  bool friChecked = false;
+  bool satChecked = false;
+  bool sunChecked = false;
+  String? selectedHour = '1';
+  String? selectedHour2 = '1';
+  String? selectedMinute = '00';
+  String? selectedMinute2 = '00';
+  String? selectedAmpm = 'AM';
+  String? selectedAmpm2 = 'AM';
+  String name = '';
+  String location = '';
+  String opDays = '';
+  bool editName = false;
+  bool editOD = false;
+  bool editOH = false;
+  String opHrs = '';
+  final nameController = TextEditingController();
+  List<String> hours = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
+  List<String> hours2 = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
+  List<String> minutes = ['00', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12',
+    '13', '14', '15', '16', '17', '18', '19', '20',
+    '21', '22', '23', '24', '25', '26', '27', '28', '29', '30',
+    '31', '32', '33', '34', '35', '36', '37', '38', '39', '40',
+    '41', '42', '43', '44', '45', '46', '47', '48', '49', '50',
+    '51', '52', '53', '4', '55', '56', '57', '58', '59',];
+  List<String> minutes2 = ['00', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12',
+    '13', '14', '15', '16', '17', '18', '19', '20',
+    '21', '22', '23', '24', '25', '26', '27', '28', '29', '30',
+    '31', '32', '33', '34', '35', '36', '37', '38', '39', '40',
+    '41', '42', '43', '44', '45', '46', '47', '48', '49', '50',
+    '51', '52', '53', '4', '55', '56', '57', '58', '59',];
+  List<String> ampm = ['AM', 'PM'];
+  List<String> ampm2 = ['AM', 'PM'];
+  File? image;
+  String imageUrl = ' ';
+  bool editMenu = false;
 
+  String locationMessage = "Current location of the user";
 
-class _AvailableTablesState extends State<AvailableTables> {
-  DatabaseReference ref = FirebaseDatabase.instance.ref("numOfRests");
-  int numOfRests = 0;
-  List<String> nameList = [];
-  List<int> numOfTablesList = [];
-  List<String> dishList = [];
-  List<String> priceList = [];
-  List<String> locations = [];
-  bool end = false;
-  bool selectRest = false;
-  bool viewMenu = false;
-  String selectedRest = "";
-  String logoURL = "";
-  int menuSize = 0;
-  String menuString = "";
-  bool menuOnce = false;
-  bool viewQueue = false;
-  final nOPController = TextEditingController();
-  final phoneNoController = TextEditingController();
-  final reviewController = TextEditingController();
-  int totalTables = 0;
-  String estTime = "";
-  bool showTime = false;
-  int noOfTablesAssigned = 0;
-  int pax = 0;
-  bool showQueueInfo = false;
-  String queueString = "";
-  bool queueOnce = false;
-  Map status = {};
-  double distance = 0;
-  String restaurantName = "";
-  bool tapReview = false;
-  int totalReviews = 0;
-  bool endReview = false;
-  List<String> reviewList = [];
-  bool fetchReviews = false;
-  String dropDownValue = '5★';
-  String dropDownValue2 = 'All';
-  var items = [
-    '1★',
-    '2★',
-    '3★',
-    '4★',
-    '5★',
-  ];
-
-  var items2 = [
-    'All',
-    '1★',
-    '2★',
-    '3★',
-    '4★',
-    '5★',
-  ];
-  bool stop = false;
-
-  Future<void> toShowLogo() async {
-    DatabaseReference ref = FirebaseDatabase.instance.ref("$selectedRest/logoURL");
-    DatabaseEvent event = await ref.once();
+  void toEditMenu() {
     setState(() {
-      logoURL = event.snapshot.value as String;
+      editMenu = !editMenu;
     });
   }
 
-  Future getData() async{
-    DatabaseEvent event = await ref.once();
-    setState(()=> numOfRests = event.snapshot.value as int);
+  void toEditName() {
+    setState(() {
+      editName = true;
+    });
+  }
 
-    for(int i=0; i<numOfRests; i++){
-      DatabaseReference ref2 = FirebaseDatabase.instance.ref("rest$i/name");
-      DatabaseReference ref3 = FirebaseDatabase.instance.ref("rest$i/numOfTables");
-      DatabaseReference ref4 = FirebaseDatabase.instance.ref("rest$i/operatingDays");
-      DatabaseReference ref5 = FirebaseDatabase.instance.ref("rest$i/openTime");
-      DatabaseReference ref6 = FirebaseDatabase.instance.ref("rest$i/closeTime");
-      DatabaseReference ref7 = FirebaseDatabase.instance.ref("rest$i/location");
-      DatabaseEvent event2 = await ref2.once();
-      DatabaseEvent event3 = await ref3.once();
-      DatabaseEvent event4 = await ref4.once();
-      DatabaseEvent event5 = await ref5.once();
-      DatabaseEvent event6 = await ref6.once();
-      DatabaseEvent event7 = await ref7.once();
-      String s = event4.snapshot.value as String;
-      String openTime = event5.snapshot.value as String;
-      String closeTime = event6.snapshot.value as String;
-      String location = event7.snapshot.value as String;
-      await isNearby(location);
-      if (distance>=15){
-        setState(()=> status['rest$i'] = '');
-        setState(()=> nameList.add(''));
-        setState(()=> numOfTablesList.add(0));
-      }
-      else if (checkOpen(s, openTime, closeTime)) {
-        setState(()=> status['rest$i'] = 'O');
-        setState(()=> nameList.add(event2.snapshot.value as String));
-        setState(()=> numOfTablesList.add(event3.snapshot.value as int));
-      } else {
-        setState(()=> status['rest$i'] = 'C');
-        setState(()=> nameList.add("${event2.snapshot.value as String} (CLOSED)"));
-        setState(()=> numOfTablesList.add(0));
-      }
+  void toEditOD() {
+    setState(() {
+      editOD = !editOD;
+    });
+  }
+
+  void toSubmitOD() {
+    setState(() {
+      editOD = false;
+    });
+  }
+
+  void toEditOH() {
+    setState(() {
+      editOH = !editOH;
+    });
+  }
+
+  void toSubmitOH() {
+    setState(() {
+      editOH = false;
+    });
+  }
+
+  void toSubmitName() {
+    setState(() {
+      editName = false;
+    });
+    updateName();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+
+    String? uid = FirebaseAuth.instance.currentUser?.uid;
+    CollectionReference user = FirebaseFirestore.instance.collection(
+        'restaurants');
+    var docUser = user.doc(uid);
+    late String lat;
+    late String long;
+
+    if (editMenu) {
+      //return const RestDetails2();
+      return const EditMenuList();
+    } else {
+      return FutureBuilder<DocumentSnapshot>(
+        future: docUser.get(),
+        builder: (BuildContext context,
+            AsyncSnapshot<DocumentSnapshot> snapshot) {
+          if (snapshot.hasError) {
+            return const Text("Something went wrong");
+          }
+
+          if (snapshot.hasData && !snapshot.data!.exists) {
+            return const Text("Document does not exist");
+          }
+          if (snapshot.connectionState == ConnectionState.done) {
+            Map<String, dynamic> data = snapshot.data!.data() as Map<String,
+                dynamic>;
+            name = data['name'];
+            location = data['location'];
+            monChecked = data['operatingDays'][0];
+            tueChecked = data['operatingDays'][1];
+            wedChecked = data['operatingDays'][2];
+            thuChecked = data['operatingDays'][3];
+            friChecked = data['operatingDays'][4];
+            satChecked = data['operatingDays'][5];
+            sunChecked = data['operatingDays'][6];
+            selectedHour = data['openTime'][0];
+            selectedMinute = data['openTime'][1];
+            selectedAmpm = data['openTime'][2];
+            selectedHour2 = data['closeTime'][0];
+            selectedMinute2 = data['closeTime'][1];
+            selectedAmpm2 = data['closeTime'][2];
+            imageUrl = data['logoUrl'];
+
+            opDays = '';
+            if(monChecked) opDays = 'Mon,';
+            if(tueChecked) opDays = '${opDays}Tue,';
+            if(wedChecked) opDays = '${opDays}Wed,';
+            if(thuChecked) opDays = '${opDays}Thu,';
+            if(friChecked) opDays = '${opDays}Fri,';
+            if(satChecked) opDays = '${opDays}Sat,';
+            if(sunChecked) opDays = '${opDays}Sun,';
+            opHrs = selectedHour.toString() + ":" + selectedMinute.toString() + selectedAmpm.toString() + ' to ' + selectedHour2.toString() + ":" + selectedMinute2.toString() + selectedAmpm2.toString();
+
+            return Container(
+                padding: EdgeInsets.only(left: 32, right: 32),
+                child: SingleChildScrollView(
+                    child: Column(
+                      children: <Widget>[
+                        SizedBox(
+                          width: double.infinity,
+                          child: Text(
+                            'Name',
+                            textAlign: TextAlign.left,
+                            style: TextStyle(
+                                fontSize: 18, color: Colors.lightGreen[900]),
+                          ),
+                        ),
+                        if (!editName) Row(
+                          children: <Widget>[
+                            Text(name,
+                              textAlign: TextAlign.left,
+                              style: TextStyle(fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.blueAccent[900]),
+                            ),
+                            IconButton(onPressed: toEditName,
+                                icon: const Icon(Icons.edit))
+                          ],
+                        )
+                        else
+                          Row(
+                            children: <Widget>[
+                              Expanded(
+                                child: TextFormField(
+                                  controller: nameController,
+                                  decoration: const InputDecoration(
+                                    border: OutlineInputBorder(),
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                child: IconButton(onPressed: toSubmitName,
+                                    icon: const Icon(Icons.check))
+                              ),
+                            ],
+                          ),
+                        SizedBox(
+                          width: double.infinity,
+                          child: Text(
+                            'Operating Days',
+                            textAlign: TextAlign.left,
+                            style: TextStyle(
+                                fontSize: 18, color: Colors.lightGreen[900]),
+                          ),
+                        ),
+                        if (!editOD) Row(
+                          children: <Widget>[
+                            Text(opDays,
+                              textAlign: TextAlign.left,
+                              style: TextStyle(fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.blueAccent[900]),
+                            ),
+                            IconButton(onPressed: toEditOD,
+                                icon: const Icon(Icons.edit))
+                          ],
+                        )
+                        else Column(
+                          children: <Widget>[
+                        Row(
+                          children: <Widget>[
+                            Expanded(child:
+                            CheckboxListTile(
+                              controlAffinity: ListTileControlAffinity.leading,
+                              title: Text('M'),
+                              value: monChecked,
+                              onChanged: (value) {
+                                setState(() => monChecked = value!);
+                                updateOD();
+                              },)),
+                            Expanded(child:
+                              CheckboxListTile(
+                              controlAffinity: ListTileControlAffinity.leading,
+                              title: Text('T'),
+                              value: tueChecked,
+                              onChanged: (value) {
+                              setState(() => tueChecked = value!);
+                              updateOD();
+                              },)),
+                            Expanded(child:
+                            CheckboxListTile(
+                              controlAffinity: ListTileControlAffinity.leading,
+                              title: Text('W'),
+                              value: wedChecked,
+                              onChanged: (value) {
+                                setState(() => wedChecked = value!);
+                                updateOD();
+                              },)),
+                            Expanded(child:
+                            CheckboxListTile(
+                              controlAffinity: ListTileControlAffinity.leading,
+                              title: Text('T'),
+                              value: thuChecked,
+                              onChanged: (value) {
+                                setState(() => thuChecked = value!);
+                                updateOD();
+                              },)),
+                          ],
+                        ),
+                        Row(
+                          children: <Widget>[
+                            Expanded(child:
+                            CheckboxListTile(
+                              controlAffinity: ListTileControlAffinity.leading,
+                              title: Text('F'),
+                              value: friChecked,
+                              onChanged: (value) {
+                                setState(() => friChecked = value!);
+                                updateOD();
+                              },)),
+                            Expanded(child:
+                            CheckboxListTile(
+                              controlAffinity: ListTileControlAffinity.leading,
+                              title: Text('S'),
+                              value: satChecked,
+                              onChanged: (value) {
+                                setState(() => satChecked = value!);
+                                updateOD();
+                              },)),
+                            Expanded(child:
+                            CheckboxListTile(
+                              controlAffinity: ListTileControlAffinity.leading,
+                              title: Text('S'),
+                              value: sunChecked,
+                              onChanged: (value) {
+                                setState(() => sunChecked = value!);
+                                updateOD();
+                              },)),
+                            IconButton(onPressed: toEditOD,
+                                icon: const Icon(Icons.check))
+                          ],
+                        )
+                          ]
+                        ), //ends operating days
+                        SizedBox(
+                          width: double.infinity,
+                          child: Text(
+                            'Operating Hours',
+                            textAlign: TextAlign.left,
+                            style: TextStyle(
+                                fontSize: 18, color: Colors.lightGreen[900]),
+                          ),
+                        ),
+                        if (!editOH) Row(
+                          children: <Widget>[
+                            Text(opHrs,
+                              textAlign: TextAlign.left,
+                              style: TextStyle(fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.blueAccent[900]),
+                            ),
+                            IconButton(onPressed: toEditOH,
+                                icon: const Icon(Icons.edit))
+                          ],
+                        )
+                        else Column(
+                          children: <Widget>[
+                            Row(
+                              children: <Widget>[
+                                Expanded(child:
+                                DropdownButton<String>(
+                                    value: selectedHour,
+                                    items: hours
+                                        .map((hours) => DropdownMenuItem<String>(
+                                        value: hours,
+                                        child: Text(hours,style: TextStyle(fontSize: 18),))).toList(),
+                                    onChanged: (hours) {
+                                      setState(() => selectedHour = hours);
+                                      submitOT();
+                                      }),
+                                ),
+                                SizedBox(child: Text(':', style: TextStyle(fontWeight: FontWeight.bold),), width: 10,),
+                                Expanded(child:
+                                DropdownButton<String>(
+                                    value: selectedMinute,
+                                    items: minutes
+                                        .map((minutes) => DropdownMenuItem<String>(
+                                        value: minutes,
+                                        child: Text(minutes,style: TextStyle(fontSize: 18),))).toList(),
+                                    onChanged: (minutes){
+                                      setState(() => selectedMinute = minutes);
+                                      submitOT();
+                                      }),
+                                ),
+                                Expanded(child:
+                                DropdownButton<String>(
+                                    value: selectedAmpm,
+                                    items: ampm
+                                        .map((ampm) => DropdownMenuItem<String>(
+                                        value: ampm,
+                                        child: Text(ampm,style: TextStyle(fontSize: 18),))).toList(),
+                                    onChanged: (ampm) {
+                                      setState(() => selectedAmpm = ampm);
+                                      submitOT();
+                                      }),
+                                ),
+                              ],
+                            ),
+                            Text('to', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.lightGreen[900]),),
+                            Row( // second row
+                              children: <Widget>[
+                                Expanded(child:
+                                DropdownButton<String>(
+                                    value: selectedHour2,
+                                    items: hours2
+                                        .map((hours2) => DropdownMenuItem<String>(
+                                        value: hours2,
+                                        child: Text(hours2,style: TextStyle(fontSize: 18),))).toList(),
+                                    onChanged: (hours2) {
+                                      setState(() => selectedHour2 = hours2);
+                                      submitOT();
+                                      }),
+                                ),
+                                SizedBox(child: Text(':', style: TextStyle(fontWeight: FontWeight.bold),), width: 10,),
+                                Expanded(child:
+                                DropdownButton<String>(
+                                    value: selectedMinute2,
+                                    items: minutes2
+                                        .map((minutes2) => DropdownMenuItem<String>(
+                                        value: minutes2,
+                                        child: Text(minutes2,style: TextStyle(fontSize: 18),))).toList(),
+                                    onChanged: (minutes2){
+                                      setState(() => selectedMinute2 = minutes2);
+                                      submitOT();
+                                    }),
+                                ),
+                                Expanded(child:
+                                DropdownButton<String>(
+                                    value: selectedAmpm2,
+                                    items: ampm2
+                                        .map((ampm2) => DropdownMenuItem<String>(
+                                        value: ampm2,
+                                        child: Text(ampm2,style: TextStyle(fontSize: 18),))).toList(),
+                                    onChanged: (ampm2){setState(() => selectedAmpm2 = ampm2);
+                                    submitOT();}),
+                                ),
+                              ],
+                            ),
+                            IconButton(onPressed: toEditOH,
+                                icon: const Icon(Icons.check))
+                          ],
+                        ),
+                        SizedBox(
+                          width: double.infinity,
+                          child: Text(
+                            'Location',
+                            textAlign: TextAlign.left,
+                            style: TextStyle(
+                                fontSize: 18, color: Colors.lightGreen[900]),
+                          ),
+                        ),
+                        SizedBox(
+                          width: double.infinity,
+                          child: Row(
+                            children: <Widget>[
+                              Text('${location.split(', ')[0]}\n${location.split(', ')[1]}',
+                                //overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.left,
+                                //softWrap: false,
+                                style: TextStyle(fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.blueAccent[900]),
+                              ),
+                            ],
+                          ),
+                        ),
+                        ElevatedButton(onPressed: (){
+                          getCurrentLocation().then((value) {
+                            lat = '${value.latitude}';
+                            long = '${value.longitude}';
+                            print(lat);
+                            print(long);
+                            setState(()=> locationMessage = 'latitude: $lat, longitude: $long');
+                            updateLocation();
+                          });
+                          },
+                          style: ElevatedButton.styleFrom(
+                            primary: Colors.blue,
+                          ), child: const Text("Get current location"),),
+                        SizedBox(
+                          width: double.infinity,
+                          child: Text(
+                            'Logo',
+                            textAlign: TextAlign.left,
+                            style: TextStyle(
+                                fontSize: 18, color: Colors.lightGreen[900]),
+                          ),
+                        ),
+                        //letak gambar logo from db
+                        imageUrl != ' ' ? Image.network(imageUrl, width: 160, height: 160,) : const Text("no logo uploaded"),
+                        ElevatedButton.icon(onPressed: pickImage,
+                            icon: Icon(Icons.image_outlined),
+                            label: Text('Upload Image')),
+                        ElevatedButton(onPressed: toEditMenu, child: Text('Edit Menu'))
+                      ],
+                    )
+                )
+
+            );
+          }
+
+          return const CircularProgressIndicator();
+        });
     }
-    setState(()=> end = true);
-  }
-
-  Future isNearby(String s) async {
-    double latC = 0;
-    double longC = 0;
-    await getCurrentLocation().then((value) {
-      String C = '${value.latitude}';
-      latC = double.parse(C);
-      String D = '${value.longitude}';
-      longC = double.parse(D);
-    });
-
-    s = s.substring(10);
-    double latR = double.parse(s.split(', longitude: ')[0]);
-    double longR = double.parse(s.split(', longitude: ')[1]);
-    var p = 0.017453292519943295;
-    var a = 0.5 - cos((latR - latC) * p)/2 +
-        cos(latC * p) * cos(latR * p) *
-            (1 - cos((longR - longC) * p))/2;
-    var d = (12742 * asin(sqrt(a)));
-    setState(()=> distance = d);
   }
 
   Future<Position> getCurrentLocation() async{
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if(!serviceEnabled){
+      print('Location service is disabled');
       return Future.error('Location service is disabled');
     }
     LocationPermission permission = await Geolocator.checkPermission();
@@ -160,626 +495,194 @@ class _AvailableTablesState extends State<AvailableTables> {
     return await Geolocator.getCurrentPosition();
   }
 
-  bool checkOpen(String s, String openTime, String closeTime) {
-    DateTime now = DateTime.now();
-    DateTime malaysiaTime = now.add(const Duration(hours: 8));
-    int d = malaysiaTime.weekday;
-    int openHour = 0;
-    int closeHour = 0;
-    int currentHour = malaysiaTime.hour;
-    int openMinute = 0;
-    int closeMinute = 0;
-    int currentMinute = malaysiaTime.minute;
-    if (s[d-1]=="C") {
-      return false; //it's closed
-    } else { //it opened that day, but out of operating hours //800AM //1130PM
-      List openTimeList = [openTime.substring(0, openTime.length - 4),openTime.substring(openTime.length - 4, openTime.length - 2), openTime.substring(openTime.length - 2)];
-      List closeTimeList = [closeTime.substring(0, closeTime.length - 4),closeTime.substring(closeTime.length - 4, closeTime.length - 2), closeTime.substring(closeTime.length - 2)];
+  Future uploadLogo() async {
+    var currentUser = FirebaseAuth.instance.currentUser;
+    final path = 'files/${currentUser?.uid}/logo.jpg';
+    final logo = File(image!.path);
+    var uid = currentUser?.uid;
 
-      //convert open time to 24 hours
-      if (openTimeList[2]=="PM"&&openTimeList[0]!="12") {
-        openHour = int.parse(openTimeList[0]) + 12;
-      } else if (openTimeList[2]=="AM"&&openTimeList[0]=="12"){
-        openHour = 0;
-      } else {
-        openHour = int.parse(openTimeList[0]);
-      }
+    final ref = FirebaseStorage.instance.ref().child(path);
+    await ref.putFile(logo);
 
-      //convert close time to 24 hours
-      if (closeTimeList[2]=="PM"&&closeTimeList[0]!="12") {
-        closeHour = int.parse(closeTimeList[0]) + 12;
-      } else if (closeTimeList[2]=="AM"&&closeTimeList[0]=="12"){
-        closeHour = 24;
-      } else {
-        closeHour = int.parse(closeTimeList[0]);
-      }
+    DatabaseReference ref2 = FirebaseDatabase.instance.ref("uids/$uid");
+    DatabaseEvent event = await ref2.once();
+    String restID = event.snapshot.value as String; //rest2
+    DatabaseReference ref3 = FirebaseDatabase.instance.ref(restID);
 
-      openMinute = int.parse(openTimeList[1]);
-      closeMinute = int.parse(closeTimeList[1]);
+    ref.getDownloadURL().then((value) async {
+      final docUser = FirebaseFirestore.instance.collection('restaurants').doc(
+          currentUser?.uid);
+      docUser.update(
+          {
+            'logoUrl': value,
+          });
 
-      double currentTime = currentHour + currentMinute/60;
-      double openTimeDouble = openHour + openMinute/60;
-      double closeTimeDouble = closeHour + closeMinute/60;
-
-      print('current: $currentTime');
-      print('open: $openTimeDouble');
-      print('close: $closeTimeDouble');
-
-      if (currentTime<openTimeDouble||currentTime>=closeTimeDouble){
-        return false;
-      }
-    }
-    return true; //it is opened
-  }
-
-  Future getMenu() async{
-    if (menuOnce) {
-      setState(()=> viewMenu = !viewMenu);
-      return;
-    }
-    setState(()=> menuOnce = !menuOnce);
-    DatabaseReference ref4 = FirebaseDatabase.instance.ref("$selectedRest/menuSize");
-    DatabaseEvent event = await ref4.once();
-    setState(()=> menuSize = event.snapshot.value as int);
-
-    for(int i=0; i<menuSize; i++){
-      DatabaseReference ref2 = FirebaseDatabase.instance.ref("$selectedRest/dishes/dish$i");
-      DatabaseReference ref3 = FirebaseDatabase.instance.ref("$selectedRest/prices/price$i");
-      DatabaseEvent event2 = await ref2.once();
-      DatabaseEvent event3 = await ref3.once();
-      String dish = event2.snapshot.value as String;
-      String price = event3.snapshot.value as String;
-      setState(()=> dishList.add(event2.snapshot.value as String));
-      setState(()=> priceList.add(event3.snapshot.value as String));
-      setState(() {
-        menuString = "$menuString$dish : RM$price\n";
+      await ref3.update({
+        "logoURL": value
       });
-    }
-    setState(()=> viewMenu = !viewMenu);
+    });
+
   }
 
-  Future addQueue() async{
-    setState(()=> viewQueue = !viewQueue);
+  Future pickImage() async {
+    try{
+      final image = await ImagePicker().pickImage(source: ImageSource.gallery);
+      if (image == null) return;
+
+      final imageTemporary = File(image.path);
+      setState(() => this.image = imageTemporary);
+      uploadLogo();
+    } on PlatformException catch (e) {
+      print("Failed to pick image: $e");
+    }
   }
 
-  Future calculateEstTime() async{
-    if (!isNumeric(nOPController.text)){
-      showToast();
-      setState(()=> stop = true);
-      return;
-    }
-    setState(()=> pax = int.parse(nOPController.text));
-    if (pax==0) {
-      showToast2();
-      setState(()=> stop = true);
-      return;
-    }
+  Future updateLocation() async {
+    var currentUser = FirebaseAuth.instance.currentUser;
+    final docUser = FirebaseFirestore.instance.collection('restaurants').doc(
+        currentUser?.uid);
+    var uid = currentUser?.uid;
 
-    DatabaseReference ref4 = FirebaseDatabase.instance.ref("$selectedRest/totalTables");
-    DatabaseEvent event = await ref4.once();
-    setState(()=> totalTables = event.snapshot.value as int);
-    if(pax>totalTables*4) {
-      showToast3();
-      setState(()=> stop = true);
-      return;
-    }
-    int waitTime = 0;
-    int clearTime = 0;
-    int minTime = 100;
-    List<int> times = [40, 34, 32, 36, 2, 3, 24, 19, 13]; //testing
-    //List<int> times = [];
-    //dont delete
-    /*for(int i=1; i<=totalTables; i++){
-      DatabaseReference ref2 = FirebaseDatabase.instance.ref("$selectedRest/Table/Table $i/waitTime");
-      DatabaseReference ref3 = FirebaseDatabase.instance.ref("$selectedRest/Table/Table $i/clearTime");
-      DatabaseEvent event2 = await ref2.once();
-      DatabaseEvent event3 = await ref3.once();
-      waitTime = event2.snapshot.value as int;
-      clearTime = event3.snapshot.value as int;
-      if(clearTime!=0){
-        times.add(clearTime);
-      }else if(waitTime!=0){
-        times.add(waitTime + 5);
-      }else {
-        times.add(waitTime);
+    docUser.update(
+        {
+          'location': locationMessage,
+        }
+    );
+
+    DatabaseReference ref = FirebaseDatabase.instance.ref("uids/$uid");
+    DatabaseEvent event = await ref.once();
+    String restID = event.snapshot.value as String; //rest2
+    DatabaseReference ref2 = FirebaseDatabase.instance.ref(restID);
+    await ref2.update({
+      "location": locationMessage
+    });
+  }
+
+  Future updateName() async {
+    var currentUser = FirebaseAuth.instance.currentUser;
+    final docUser = FirebaseFirestore.instance.collection('restaurants').doc(
+        currentUser?.uid);
+    final docUser2 = FirebaseFirestore.instance.collection('restaurants').doc(
+        'announcements');
+    var uid = currentUser?.uid;
+
+    docUser.update(
+        {
+          'name': nameController.text,
+        }
+    );
+
+    docUser2.update(
+        {
+          '$uid': nameController.text,
+        }
+    );
+
+    DatabaseReference ref = FirebaseDatabase.instance.ref("uids/$uid");
+    DatabaseEvent event = await ref.once();
+    String restID = event.snapshot.value as String; //rest2
+    DatabaseReference ref2 = FirebaseDatabase.instance.ref(restID);
+    await ref2.update({
+      "name": nameController.text
+    });
+  }
+
+  Future updateOD() async {
+    var currentUser = FirebaseAuth.instance.currentUser;
+    final docUser = FirebaseFirestore.instance.collection('restaurants').doc(
+        currentUser?.uid);
+    var uid = currentUser?.uid;
+    docUser.update(
+        {
+          'operatingDays': [monChecked, tueChecked, wedChecked, thuChecked,
+            friChecked, satChecked, sunChecked],
+        }
+    );
+    List days = [monChecked, tueChecked, wedChecked, thuChecked,
+      friChecked, satChecked, sunChecked];
+    String s = "";
+    for(int i=0;i<days.length;i++){
+      if (days[i]) {
+        s = "${s}O";
+      } else {
+        s = "${s}C";
       }
-    }*/
-    times.sort();
-    print(times);
-
-    DatabaseReference ref5 = FirebaseDatabase.instance.ref("$selectedRest/Queues/totalQueues");
-    DatabaseEvent event5 = await ref5.once();
-    int totalQueues = event5.snapshot.value as int;
-    int totalTablesReserved = 0;
-
-    for(int j=totalQueues-1;j>=0;j--){
-      DatabaseReference ref4 = FirebaseDatabase.instance.ref("$selectedRest/Queues/queue$j/noOfTablesNeeded");
-      DatabaseEvent event4 = await ref4.once();
-      if(!event4.snapshot.exists) continue;
-      totalTablesReserved = totalTablesReserved + (event4.snapshot.value as int);
     }
 
-    setState(()=> noOfTablesAssigned = (pax/4).ceil());
-    try {
-      minTime = times.elementAt(noOfTablesAssigned-1+totalTablesReserved);
-    } catch (e) {
-      int i = noOfTablesAssigned - (times.length - totalTablesReserved);
-      minTime = times.elementAt(i- 1) + 55*(i/times.length).ceil();
-    }
-
-    DateTime now = DateTime.now();
-    int hour = now.hour + 8;
-    int minute = now.minute;
-    if(hour>=24) hour = hour - 24;
-    minute = minute + minTime;
-    if (minute>=60) {
-      hour = hour + (minute/60).floor();
-      minute = minute - 60*(minute/60).floor();
-    }
-    String ampm="";
-    if(hour>=0&&hour<=11) {
-      ampm = "am";
-    } else {
-      ampm = "pm";
-    }
-    if(hour==0){
-      hour = 12;
-    } else if (hour>=13&&hour<24){
-      hour = hour - 12;
-    }
-
-    if(minute<10){
-      setState(()=> estTime = "$hour:0$minute $ampm");
-    }else {
-      setState(()=> estTime = "$hour:$minute $ampm");
-    }
-    //setState(()=> showTime = true);
-    //print("$hour:$minute $ampm");
+    DatabaseReference ref = FirebaseDatabase.instance.ref("uids/$uid");
+    DatabaseEvent event = await ref.once();
+    String restID = event.snapshot.value as String; //rest2
+    DatabaseReference ref2 = FirebaseDatabase.instance.ref(restID);
+    await ref2.update({
+      "operatingDays": s
+    });
   }
 
-  bool isNumeric(String s) {
-    return int.tryParse(s) != null;
+  Future updateOH() async {
+    var currentUser = FirebaseAuth.instance.currentUser;
+    final docUser = FirebaseFirestore.instance.collection('restaurants').doc(
+        currentUser?.uid);
+    var uid = currentUser?.uid;
+    docUser.update(
+        {
+          'openTime': [selectedHour.toString(), selectedMinute.toString(), selectedAmpm.toString()],
+          'closeTime' : [selectedHour2.toString(), selectedMinute2.toString(), selectedAmpm2.toString()],
+        }
+    );
+    DatabaseReference ref = FirebaseDatabase.instance.ref("uids/$uid");
+    DatabaseEvent event = await ref.once();
+    String restID = event.snapshot.value as String; //rest2
+    DatabaseReference ref2 = FirebaseDatabase.instance.ref(restID);
+    await ref2.update({ //
+      "openTime":
+        selectedHour.toString() +
+        selectedMinute.toString() +
+        selectedAmpm.toString()
+      ,
+      "closeTime":
+        selectedHour2.toString() +
+        selectedMinute2.toString() +
+        selectedAmpm2.toString()
+    });
+  }
+
+  void submitOT(){
+    if (checkValidOT(selectedHour.toString(), selectedHour2.toString(), selectedMinute.toString(),
+        selectedMinute2.toString(), selectedAmpm.toString(), selectedAmpm2.toString()))
+      updateOH();
+    else
+      showToast();
+  }
+
+  bool checkValidOT(String h, String h2, String m, String m2, String ap, String ap2){
+    double open, close;
+    open = timeToDouble(h, m, ap);
+    close = timeToDouble(h2, m2, ap2);
+
+    if (open < close)
+      return true;
+    else
+      return false;
+
+  }
+
+  double timeToDouble (String h, String m, String ap){
+    double time;
+
+    if (ap == 'AM' && h != '12')
+      time = double.parse(h);
+    else if (ap == 'AM' && h == '12')
+      time = 24;
+    else if (ap == 'PM' && h != '12')
+      time = double.parse(h)+12;
+    else
+      time = 12;
+
+    return time + double.parse(m)/60;
   }
 
   void showToast() => Fluttertoast.showToast(
-    msg: "Please enter a number",
+    msg: "Please enter valid operating hours",
     fontSize: 18,
   );
-
-  void showToast2() => Fluttertoast.showToast(
-    msg: "Please enter number more than 0",
-    fontSize: 18,
-  );
-
-  void showToast3() => Fluttertoast.showToast(
-    msg: "Not enough tables! Please contact the restaurant for inquiries",
-    fontSize: 18,
-  );
-
-  void showToast4() => Fluttertoast.showToast(
-    msg: "Queue is successfully cancelled",
-    fontSize: 18,
-  );
-
-  Future submitQueue() async{
-    setState(()=> stop = false);
-    await calculateEstTime();
-    if(stop) return;
-    DatabaseReference ref = FirebaseDatabase.instance.ref("$selectedRest/Queues/totalQueues");
-    DatabaseEvent event = await ref.once();
-    int totalQueues = event.snapshot.value as int;
-
-    DatabaseReference ref2 = FirebaseDatabase.instance.ref("$selectedRest/Queues");
-    await ref2.update({
-      "queue$totalQueues" : {
-        "queueID" : (totalQueues+1),
-        "phoneNo" : phoneNoController.text,
-        "noOfPax" : pax,
-        "noOfTablesNeeded": noOfTablesAssigned,
-        "estimatedTime": estTime
-      },
-      "totalQueues" : totalQueues+1
-    });
-    DatabaseReference ref3 = FirebaseDatabase.instance.ref("customersUids");
-    var currentUser = FirebaseAuth.instance.currentUser;
-    var uid = currentUser?.uid;
-    await ref3.update({
-      "$uid": {
-        selectedRest: "queue$totalQueues",
-      }
-    });
-
-    getQueueInfo();
-  }
-
-  Future getQueueInfo() async{
-    if (queueOnce) return;
-    var currentUser = FirebaseAuth.instance.currentUser;
-    var uid = currentUser?.uid;
-    DatabaseReference ref = FirebaseDatabase.instance.ref("customersUids/$uid/$selectedRest");
-    DatabaseEvent event = await ref.once();
-    if(!event.snapshot.exists) return; //takde restaurant tu
-
-    String queueID = event.snapshot.value as String; //queue6
-    if(queueID=="") return;
-    //setState(()=> viewQueue = false);
-
-    DatabaseReference ref2 = FirebaseDatabase.instance.ref("$selectedRest/Queues/$queueID/phoneNo");
-    DatabaseEvent event2 = await ref2.once();
-    String s2 = event2.snapshot.value as String;
-    if (s2=="") return;
-
-    String s = (int.parse(queueID[queueID.length - 1]) + 1).toString();
-    setState(()=> queueString = "${queueString}Queue ID : $s\n");
-
-
-    setState(()=> queueString = "${queueString}Phone No : $s2\n");
-
-    DatabaseReference ref3 = FirebaseDatabase.instance.ref("$selectedRest/Queues/$queueID/noOfPax");
-    DatabaseEvent event3 = await ref3.once();
-    s = (event3.snapshot.value as int).toString();
-    setState(()=> queueString = "${queueString}No of Pax : $s\n");
-
-    DatabaseReference ref4 = FirebaseDatabase.instance.ref("$selectedRest/Queues/$queueID/estimatedTime");
-    DatabaseEvent event4 = await ref4.once();
-    s = event4.snapshot.value as String;
-    setState(()=> queueString = "${queueString}Estimated Time : $s\n");
-    setState(()=> showQueueInfo = true);
-    setState(()=> queueOnce = true);
-}
-
-  Future cancelQueue() async{
-    var currentUser = FirebaseAuth.instance.currentUser;
-    var uid = currentUser?.uid;
-    DatabaseReference ref = FirebaseDatabase.instance.ref("customersUids/$uid/$selectedRest");
-    DatabaseEvent event = await ref.once();
-    String queueID = event.snapshot.value as String;
-    DatabaseReference ref2 = FirebaseDatabase.instance.ref("$selectedRest/Queues/$queueID");
-    await ref2.update({
-      'estimatedTime': "",
-      'noOfPax': 0,
-      'noOfTablesNeeded': 0,
-      'phoneNo': "",
-      'queueID': ""
-    });
-    DatabaseReference ref3 = FirebaseDatabase.instance.ref("customersUids/$uid");
-    await ref3.update({
-      selectedRest: ""
-    }
-    );
-    showToast4();
-    setState(()=> showQueueInfo = false);
-    setState(()=> viewQueue = true);
-    setState(()=> queueString = "");
-    setState(()=> queueOnce = false);
-    recalculateTime();
-  }
-
-  Future recalculateTime() async{
-    DatabaseReference ref = FirebaseDatabase.instance.ref("$selectedRest/Queues/totalQueues");
-    DatabaseEvent event = await ref.once();
-    int totalQueues = event.snapshot.value as int;
-
-    int waitTime = 0;
-    int clearTime = 0;
-    int minTime = 100;
-    List<int> times = []; //testing
-    //dont delete
-    for(int i=1; i<=totalTables; i++){
-      DatabaseReference ref2 = FirebaseDatabase.instance.ref("$selectedRest/Table/Table $i/waitTime");
-      DatabaseReference ref3 = FirebaseDatabase.instance.ref("$selectedRest/Table/Table $i/clearTime");
-      DatabaseEvent event2 = await ref2.once();
-      DatabaseEvent event3 = await ref3.once();
-      waitTime = event2.snapshot.value as int;
-      clearTime = event3.snapshot.value as int;
-      if(clearTime!=0){
-        times.add(clearTime);
-      }else if(waitTime!=0){
-        times.add(waitTime + 5);
-      }else {
-        times.add(waitTime);
-      }
-    }
-    times.sort();
-    print(times);
-    int totalTablesAssigned = 0;
-    for(int i=0; i<totalQueues;i++){
-      DatabaseReference ref2 = FirebaseDatabase.instance.ref("$selectedRest/Queues/queue$i/noOfTablesNeeded");
-      DatabaseEvent event2 = await ref2.once();
-      int noOfTablesAssigned = event2.snapshot.value as int; //2
-      if(noOfTablesAssigned==0) continue;
-      try {
-        minTime = times.elementAt(noOfTablesAssigned-1+totalTablesAssigned);
-      } catch (e) {
-        int i = noOfTablesAssigned - (times.length - totalTablesAssigned);
-        minTime = times.elementAt(i- 1) + 55*(i/times.length).ceil();
-      }
-
-      DateTime now = DateTime.now();
-      int hour = now.hour + 8;
-      int minute = now.minute;
-      if(hour>=24) hour = hour - 24;
-      minute = minute + minTime;
-      if (minute>=60) {
-        hour = hour + (minute/60).floor();
-        minute = minute - 60*(minute/60).floor();
-      }
-      String ampm="";
-      if(hour>=0&&hour<=11) {
-        ampm = "am";
-      } else {
-        ampm = "pm";
-      }
-
-      if(hour==0){
-        hour = 12;
-      } else if (hour>=13&&hour<24){
-        hour = hour - 12;
-      }
-      DatabaseReference ref3 = FirebaseDatabase.instance.ref("$selectedRest/Queues/queue$i");
-      if(minute<10){
-        await ref3.update({
-          'estimatedTime': "$hour:0$minute $ampm"
-        });
-      }else {
-        await ref3.update({
-          'estimatedTime': "$hour:$minute $ampm"
-        });
-      }
-      totalTablesAssigned = totalTablesAssigned + noOfTablesAssigned;
-    } //end of for loop
-  }
-
-  Future submitReview() async{
-    DatabaseReference ref = FirebaseDatabase.instance.ref('$selectedRest/reviews/totalReviews');
-    DatabaseEvent event = await ref.once();
-    int totalReviews = event.snapshot.value as int;
-    DatabaseReference ref2 = FirebaseDatabase.instance.ref("$selectedRest/reviews");
-    await ref2.update({
-      'review$totalReviews' : "${reviewController.text} ($dropDownValue)",
-      'totalReviews': totalReviews+1
-    });
-    reviewController.clear();
-  }
-
-  Future viewReviews() async{
-    setState(()=> fetchReviews = true);
-    DatabaseReference ref3 = FirebaseDatabase.instance.ref('$selectedRest/reviews/totalReviews');
-    DatabaseEvent event2 = await ref3.once();
-    setState(()=> totalReviews = event2.snapshot.value as int);
-    //setState(()=> reviewList = []);
-
-    for(int i=totalReviews-1; i>=0; i--){
-      DatabaseReference ref4 = FirebaseDatabase.instance.ref('$selectedRest/reviews/review$i');
-      DatabaseEvent event4 = await ref4.once();
-      setState(()=> reviewList.add(event4.snapshot.value as String));
-    }
-
-    setState(()=> endReview = true);
-    setState(()=> fetchReviews = false);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (selectRest) {
-      if(logoURL==""||fetchReviews) {
-        return const CircularProgressIndicator();
-      }
-      else if(endReview){
-        return ListView.builder(
-                  itemCount: totalReviews,
-                  itemBuilder: (context, index){
-                    return Column(
-                      children: [
-                        if(index==0)
-                          ElevatedButton(onPressed: (){setState(()=> endReview = false);}, child: const Text("Back")),
-                        if(index==0)
-                          Text('Sort', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green[900],)),
-                        if(index==0)
-                          DropdownButton(
-                            value: dropDownValue2,
-                            icon: const Icon(Icons.keyboard_arrow_down),
-                            items: items2.map((String items) {
-                              return DropdownMenuItem(
-                                value: items,
-                                child: Text(items),
-                              );
-                            }).toList(),
-                            onChanged: (String? newValue) {
-                              setState(() {
-                                dropDownValue2 = newValue!;
-                              });
-                            },
-                          ),
-                        if(dropDownValue2=="All" || reviewList[index].substring(reviewList[index].length-3,reviewList[index].length-1)==dropDownValue2)
-                        SizedBox(
-                          width: 280,
-                          child: Card(
-                            shadowColor: Colors.amber,
-                            color: Colors.amber[100],
-                            elevation: 5,
-                            child: Padding(
-                              padding: const EdgeInsets.all(15),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    reviewList[index],
-                                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                                  ),
-                                  const SizedBox(
-                                    height: 12,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    );
-                  });
-      }
-      else {
-        return SingleChildScrollView(
-          child: Column(
-          children: [
-            Card(
-              shadowColor: Colors.amber,
-              color: Colors.amber[100],
-              child: Padding(
-                padding: const EdgeInsets.all(15),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      restaurantName,
-                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            Image.network(logoURL, width: 160, height: 160,),
-            ElevatedButton(onPressed: (){getMenu();}, child: const Text("Menu")),
-            if (viewMenu) Card (
-                shadowColor: Colors.amber,
-                color: Colors.amber[100],
-                elevation: 5,
-              child: Text(menuString, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),)
-            ),
-            if(status[selectedRest]=='O')
-            ElevatedButton(onPressed: () async {await getQueueInfo(); addQueue();
-              if(showTime) setState(()=> showTime = !showTime);
-              }, child: const Text("Queue")),
-            if (viewQueue&&queueString=="")
-              SizedBox(
-                width: 250.0,
-                child: TextFormField(
-                  controller: nOPController,
-                  decoration: const InputDecoration(
-                    hintText: 'Enter no. of pax eg: 4, 6',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-              ),
-            if (viewQueue&&queueString=="")
-              SizedBox(
-                width: 250.0,
-                child: TextFormField(
-                  controller: phoneNoController,
-                  decoration: const InputDecoration(
-                    hintText: 'Enter phone no.',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-              ),
-            if (viewQueue&&queueString=="")
-            ElevatedButton(onPressed: () async {await calculateEstTime(); setState(()=> showTime = !showTime);},
-                style: ElevatedButton.styleFrom(
-                  primary: Colors.green,
-                ), child: const Text("Show estimated time")),
-            if (showTime)
-              Text(estTime),
-            if (viewQueue&&queueString=="")
-              ElevatedButton(onPressed: (){submitQueue();},
-                style: ElevatedButton.styleFrom(
-                  primary: Colors.green,
-                ), child: const Text("Submit Queue"),),
-            if (showQueueInfo&&viewQueue)
-              Card (
-                  shadowColor: Colors.amber,
-                  color: Colors.amber[100],
-                  elevation: 5,
-                  child: Text(queueString, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),)
-              ),
-            if (showQueueInfo&&viewQueue)
-              ElevatedButton(onPressed: (){cancelQueue();},
-                style: ElevatedButton.styleFrom(
-                  primary: Colors.green,
-                ), child: const Text("Cancel queue"),),
-            ElevatedButton(onPressed: (){setState(()=> tapReview = !tapReview);}, child: const Text("Reviews")),
-            if (tapReview)
-            ElevatedButton(onPressed: (){viewReviews();},
-                style: ElevatedButton.styleFrom(
-                  primary: Colors.green,
-                ),
-                child: const Text("View reviews")),
-            if (tapReview)
-              SizedBox(
-                  height: 250,
-                  width: 350,
-                  child: TextFormField(
-                    controller: reviewController,
-                    decoration: const InputDecoration(
-                      hintText: 'Enter Review...',
-                      border: OutlineInputBorder(),
-                      //contentPadding: EdgeInsets.symmetric(vertical: 18.0,horizontal: 150.0),
-                    ),
-                    maxLines: 8,
-                  )
-              ),
-            if (tapReview)
-              DropdownButton(
-                value: dropDownValue,
-                icon: const Icon(Icons.keyboard_arrow_down),
-                items: items.map((String items) {
-                  return DropdownMenuItem(
-                    value: items,
-                    child: Text(items),
-                  );
-                }).toList(),
-                onChanged: (String? newValue) {
-                  setState(() {
-                    dropDownValue = newValue!;
-                  });
-                },
-              ),
-            if (tapReview)
-            ElevatedButton(onPressed: (){submitReview();},
-              style: ElevatedButton.styleFrom(
-                primary: Colors.green,
-              ), child: const Text("Submit Review"),),
-            ElevatedButton(onPressed: (){setState(()=> selectRest = false);},
-              style: ElevatedButton.styleFrom(
-                primary: Colors.blue,
-              ), child: const Text("Back"),),
-          ],
-      ),
-        );
-      }
-    } else
-    if (!end) {
-      if(numOfRests==0) getData();
-      return const CircularProgressIndicator();
-    } else {
-      return ListView.builder(
-          itemCount: numOfRests,
-          itemBuilder: (context, index){
-            return Row(
-                children: <Widget>[
-                  if(nameList[index]!="")
-                ElevatedButton(
-                onPressed: (){
-                  setState(() {
-                    selectedRest = "rest$index";
-                  });
-                  toShowLogo();
-                  setState(()=> restaurantName = nameList[index]);
-                    setState(() {
-                    selectRest = true;
-                  });
-                },
-            style: ElevatedButton.styleFrom(fixedSize: const Size(280, 50)),
-            child: Text(nameList[index]),
-            ),
-                  if(nameList[index]!="")
-            Text(numOfTablesList[index].toString()),
-                  if(nameList[index]!="")
-            const Icon(Icons.table_bar),
-            ]
-            );
-          }
-      );
-    }
-  }
 }
